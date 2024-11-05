@@ -1,15 +1,21 @@
 import {
   ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit,
 } from '@angular/core';
-import { Validators } from '@angular/forms';
+import { Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCard } from '@angular/material/card';
+import {
+  MatStepper, MatStep, MatStepLabel, MatStepperNext, MatStepperPrevious,
+} from '@angular/material/stepper';
 import { FormBuilder } from '@ngneat/reactive-forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@ngrx/store';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import {
   lastValueFrom, forkJoin,
 } from 'rxjs';
 import { patterns } from 'app/constants/name-patterns.constant';
+import { RequiresRolesDirective } from 'app/directives/requires-roles/requires-roles.directive';
 import { DatasetType } from 'app/enums/dataset.enum';
 import {
   IscsiAuthMethod,
@@ -37,17 +43,24 @@ import {
   IscsiTargetUpdate,
 } from 'app/interfaces/iscsi.interface';
 import { newOption } from 'app/interfaces/option.interface';
-import { WebSocketError } from 'app/interfaces/websocket-error.interface';
 import { DialogService } from 'app/modules/dialog/dialog.service';
-import { IxSlideInRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in-ref';
 import { forbiddenValues } from 'app/modules/forms/ix-forms/validators/forbidden-values-validation/forbidden-values-validation';
 import { matchOthersFgValidator } from 'app/modules/forms/ix-forms/validators/password-validation/password-validation';
+import {
+  UseIxIconsInStepperComponent,
+} from 'app/modules/ix-icon/use-ix-icons-in-stepper/use-ix-icons-in-stepper.component';
 import { AppLoaderService } from 'app/modules/loader/app-loader.service';
+import { ModalHeaderComponent } from 'app/modules/slide-ins/components/modal-header/modal-header.component';
+import { SlideInRef } from 'app/modules/slide-ins/slide-in-ref';
+import { TestDirective } from 'app/modules/test-id/test.directive';
 import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { IscsiService } from 'app/services/iscsi.service';
 import { WebSocketService } from 'app/services/ws.service';
 import { checkIfServiceIsEnabled } from 'app/store/services/services.actions';
 import { ServicesState } from 'app/store/services/services.reducer';
+import { DeviceWizardStepComponent } from './steps/device-wizard-step/device-wizard-step.component';
+import { InitiatorWizardStepComponent } from './steps/initiator-wizard-step/initiator-wizard-step.component';
+import { PortalWizardStepComponent } from './steps/portal-wizard-step/portal-wizard-step.component';
 
 @UntilDestroy()
 @Component({
@@ -55,6 +68,25 @@ import { ServicesState } from 'app/store/services/services.reducer';
   templateUrl: './iscsi-wizard.component.html',
   styleUrls: ['./iscsi-wizard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    ModalHeaderComponent,
+    MatCard,
+    ReactiveFormsModule,
+    MatStepper,
+    MatStep,
+    MatStepLabel,
+    DeviceWizardStepComponent,
+    MatButton,
+    MatStepperNext,
+    TestDirective,
+    PortalWizardStepComponent,
+    MatStepperPrevious,
+    InitiatorWizardStepComponent,
+    RequiresRolesDirective,
+    TranslateModule,
+    UseIxIconsInStepperComponent,
+  ],
 })
 export class IscsiWizardComponent implements OnInit {
   isLoading = false;
@@ -160,7 +192,8 @@ export class IscsiWizardComponent implements OnInit {
     if (extentPayload.type === IscsiExtentType.File) {
       const filesize = value.filesize;
       extentPayload.filesize = filesize % blocksizeDefault
-        ? (filesize + (blocksizeDefault - filesize % blocksizeDefault)) : filesize;
+        ? (filesize + (blocksizeDefault - filesize % blocksizeDefault))
+        : filesize;
       extentPayload.path = value.path;
     } else if (extentPayload.type === IscsiExtentType.Disk) {
       if (value.disk === newOption) {
@@ -224,7 +257,7 @@ export class IscsiWizardComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private slideInRef: IxSlideInRef<IscsiWizardComponent>,
+    private slideInRef: SlideInRef<IscsiWizardComponent>,
     private iscsiService: IscsiService,
     private ws: WebSocketService,
     private errorHandler: ErrorHandlerService,
@@ -361,7 +394,7 @@ export class IscsiWizardComponent implements OnInit {
     if (this.isNewZvol) {
       await this.createZvol(this.zvolPayload).then(
         (createdZvol) => this.createdZvol = createdZvol,
-        (err: WebSocketError) => this.handleError(err),
+        (err: unknown) => this.handleError(err),
       );
     }
 
@@ -372,7 +405,7 @@ export class IscsiWizardComponent implements OnInit {
 
     await this.createExtent(this.extentPayload).then(
       (createdExtent) => this.createdExtent = createdExtent,
-      (err: WebSocketError) => this.handleError(err),
+      (err: unknown) => this.handleError(err),
     );
 
     if (this.toStop) {
@@ -383,7 +416,7 @@ export class IscsiWizardComponent implements OnInit {
     if (this.isNewAuthgroup) {
       await this.createAuthgroup(this.authgroupPayload).then(
         (createdAuthgroup) => this.createdAuthgroup = createdAuthgroup,
-        (err: WebSocketError) => this.handleError(err),
+        (err: unknown) => this.handleError(err),
       );
     }
 
@@ -395,7 +428,7 @@ export class IscsiWizardComponent implements OnInit {
     if (this.isNewPortal) {
       await this.createPortal(this.portalPayload).then(
         (createdPortal) => this.createdPortal = createdPortal,
-        (err: WebSocketError) => this.handleError(err),
+        (err: unknown) => this.handleError(err),
       );
     }
 
@@ -407,7 +440,7 @@ export class IscsiWizardComponent implements OnInit {
     if (this.isNewInitiator) {
       await this.createInitiator(this.initiatorPayload).then(
         (createdInitiator) => this.createdInitiator = createdInitiator,
-        (err: WebSocketError) => this.handleError(err),
+        (err: unknown) => this.handleError(err),
       );
     }
 
@@ -419,7 +452,7 @@ export class IscsiWizardComponent implements OnInit {
     if (this.isNewTarget) {
       await this.createTarget(this.targetPayload).then(
         (createdTarget) => this.createdTarget = createdTarget,
-        (err: WebSocketError) => this.handleError(err),
+        (err: unknown) => this.handleError(err),
       );
     }
 
@@ -430,7 +463,7 @@ export class IscsiWizardComponent implements OnInit {
 
     await this.createTargetExtent(this.targetExtentPayload).then(
       (createdTargetExtent) => this.createdTargetExtent = createdTargetExtent,
-      (err: WebSocketError) => this.handleError(err),
+      (err: unknown) => this.handleError(err),
     );
 
     if (this.toStop) {

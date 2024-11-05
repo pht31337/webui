@@ -4,18 +4,28 @@ import {
   Component,
   OnInit,
 } from '@angular/core';
-import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import {
+  FormBuilder, FormControl, Validators, ReactiveFormsModule,
+} from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent } from '@angular/material/card';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
+import { RequiresRolesDirective } from 'app/directives/requires-roles/requires-roles.directive';
 import { Role } from 'app/enums/role.enum';
 import { helptextSystemSupport as helptext } from 'app/helptext/system/support';
 import { DialogService } from 'app/modules/dialog/dialog.service';
 import { SupportConfig, SupportConfigUpdate } from 'app/modules/feedback/interfaces/file-ticket.interface';
-import { IxSlideInRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in-ref';
+import { IxCheckboxComponent } from 'app/modules/forms/ix-forms/components/ix-checkbox/ix-checkbox.component';
+import { IxFieldsetComponent } from 'app/modules/forms/ix-forms/components/ix-fieldset/ix-fieldset.component';
+import { IxInputComponent } from 'app/modules/forms/ix-forms/components/ix-input/ix-input.component';
 import { FormErrorHandlerService } from 'app/modules/forms/ix-forms/services/form-error-handler.service';
 import { emailValidator } from 'app/modules/forms/ix-forms/validators/email-validation/email-validation';
+import { ModalHeaderComponent } from 'app/modules/slide-ins/components/modal-header/modal-header.component';
+import { SlideInRef } from 'app/modules/slide-ins/slide-in-ref';
 import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
+import { TestDirective } from 'app/modules/test-id/test.directive';
 import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { WebSocketService } from 'app/services/ws.service';
 
@@ -25,6 +35,20 @@ import { WebSocketService } from 'app/services/ws.service';
   templateUrl: './proactive.component.html',
   styleUrls: ['./proactive.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    ModalHeaderComponent,
+    MatCard,
+    MatCardContent,
+    ReactiveFormsModule,
+    IxFieldsetComponent,
+    IxInputComponent,
+    IxCheckboxComponent,
+    RequiresRolesDirective,
+    MatButton,
+    TestDirective,
+    TranslateModule,
+  ],
 })
 export class ProactiveComponent implements OnInit {
   protected readonly requiredRoles = [Role.FullAdmin];
@@ -52,7 +76,7 @@ export class ProactiveComponent implements OnInit {
     private ws: WebSocketService,
     private cdr: ChangeDetectorRef,
     private dialogService: DialogService,
-    private slideInRef: IxSlideInRef<ProactiveComponent>,
+    private slideInRef: SlideInRef<ProactiveComponent>,
     private formErrorHandler: FormErrorHandlerService,
     private translate: TranslateService,
     private snackbar: SnackbarService,
@@ -72,10 +96,10 @@ export class ProactiveComponent implements OnInit {
         next: () => {
           this.isLoading = false;
           this.cdr.markForCheck();
-          this.slideInRef.close();
+          this.slideInRef.close(true);
 
           this.snackbar.success(
-            this.translate.instant(helptext.proactive.dialog_mesage),
+            this.translate.instant(helptext.proactive.dialog_message),
           );
         },
         error: (error: unknown) => {

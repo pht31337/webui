@@ -1,12 +1,17 @@
+import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/slide-toggle';
+import { RouterLink } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import {
   filter, map, of, switchMap,
   take,
 } from 'rxjs';
+import { RequiresRolesDirective } from 'app/directives/requires-roles/requires-roles.directive';
+import { UiSearchDirective } from 'app/directives/ui-search.directive';
 import { BootEnvironmentAction } from 'app/enums/boot-environment-action.enum';
 import { BootEnvironmentActive } from 'app/enums/boot-environment-active.enum';
 import { Role } from 'app/enums/role.enum';
@@ -14,25 +19,34 @@ import { helptextSystemBootenv } from 'app/helptext/system/boot-env';
 import { Bootenv } from 'app/interfaces/bootenv.interface';
 import { DialogService } from 'app/modules/dialog/dialog.service';
 import { EmptyService } from 'app/modules/empty/empty.service';
-import { IxSlideInRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in-ref';
+import { SearchInput1Component } from 'app/modules/forms/search-input1/search-input1.component';
 import { iconMarker } from 'app/modules/ix-icon/icon-marker.util';
+import { IxIconComponent } from 'app/modules/ix-icon/ix-icon.component';
 import { AsyncDataProvider } from 'app/modules/ix-table/classes/async-data-provider/async-data-provider';
+import { IxTableComponent } from 'app/modules/ix-table/components/ix-table/ix-table.component';
 import { actionsColumn } from 'app/modules/ix-table/components/ix-table-body/cells/ix-cell-actions/ix-cell-actions.component';
 import { checkboxColumn } from 'app/modules/ix-table/components/ix-table-body/cells/ix-cell-checkbox/ix-cell-checkbox.component';
 import { dateColumn } from 'app/modules/ix-table/components/ix-table-body/cells/ix-cell-date/ix-cell-date.component';
 import { sizeColumn } from 'app/modules/ix-table/components/ix-table-body/cells/ix-cell-size/ix-cell-size.component';
 import { textColumn } from 'app/modules/ix-table/components/ix-table-body/cells/ix-cell-text/ix-cell-text.component';
 import { yesNoColumn } from 'app/modules/ix-table/components/ix-table-body/cells/ix-cell-yes-no/ix-cell-yes-no.component';
+import { IxTableBodyComponent } from 'app/modules/ix-table/components/ix-table-body/ix-table-body.component';
+import { IxTableHeadComponent } from 'app/modules/ix-table/components/ix-table-head/ix-table-head.component';
+import { IxTablePagerComponent } from 'app/modules/ix-table/components/ix-table-pager/ix-table-pager.component';
+import { IxTableEmptyDirective } from 'app/modules/ix-table/directives/ix-table-empty.directive';
 import { SortDirection } from 'app/modules/ix-table/enums/sort-direction.enum';
 import { createTable } from 'app/modules/ix-table/utils';
 import { AppLoaderService } from 'app/modules/loader/app-loader.service';
+import { PageHeaderComponent } from 'app/modules/page-header/page-title-header/page-header.component';
+import { SlideInRef } from 'app/modules/slide-ins/slide-in-ref';
 import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
+import { TestDirective } from 'app/modules/test-id/test.directive';
 import { BootPoolDeleteDialogComponent } from 'app/pages/system/bootenv/boot-pool-delete-dialog/boot-pool-delete-dialog.component';
 import { BootEnvironmentFormComponent } from 'app/pages/system/bootenv/bootenv-form/bootenv-form.component';
 import { bootListElements } from 'app/pages/system/bootenv/bootenv-list/bootenv-list.elements';
 import { BootenvStatsDialogComponent } from 'app/pages/system/bootenv/bootenv-stats-dialog/bootenv-stats-dialog.component';
 import { ErrorHandlerService } from 'app/services/error-handler.service';
-import { IxSlideInService } from 'app/services/ix-slide-in.service';
+import { SlideInService } from 'app/services/slide-in.service';
 import { WebSocketService } from 'app/services/ws.service';
 
 // TODO: Exclude AnythingUi when NAS-127632 is done
@@ -48,6 +62,24 @@ interface BootenvUi extends Bootenv {
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     { provide: MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS, useValue: { disableToggleValue: true } },
+  ],
+  standalone: true,
+  imports: [
+    PageHeaderComponent,
+    SearchInput1Component,
+    RequiresRolesDirective,
+    MatButton,
+    TestDirective,
+    UiSearchDirective,
+    RouterLink,
+    IxIconComponent,
+    IxTableComponent,
+    IxTableEmptyDirective,
+    IxTableHeadComponent,
+    IxTableBodyComponent,
+    IxTablePagerComponent,
+    TranslateModule,
+    AsyncPipe,
   ],
 })
 export class BootEnvironmentListComponent implements OnInit {
@@ -88,10 +120,10 @@ export class BootEnvironmentListComponent implements OnInit {
         switch (row.active) {
           case BootEnvironmentActive.Now:
             return this.translate.instant('Now');
-          case BootEnvironmentActive.Reboot:
-            return this.translate.instant('Reboot');
-          case BootEnvironmentActive.NowReboot:
-            return this.translate.instant('Now/Reboot');
+          case BootEnvironmentActive.Restart:
+            return this.translate.instant('Restart');
+          case BootEnvironmentActive.NowRestart:
+            return this.translate.instant('Now/Restart');
           default:
             return row.active;
         }
@@ -117,7 +149,9 @@ export class BootEnvironmentListComponent implements OnInit {
           iconName: iconMarker('mdi-check-decagram'),
           requiredRoles: this.requiredRoles,
           tooltip: this.translate.instant('Activate'),
-          hidden: (row) => of(row.active.includes('R')),
+          hidden: (row) => {
+            return of([BootEnvironmentActive.NowRestart, BootEnvironmentActive.Restart].includes(row.active));
+          },
           onClick: (row) => this.doActivate(row),
         },
         {
@@ -177,7 +211,7 @@ export class BootEnvironmentListComponent implements OnInit {
     private ws: WebSocketService,
     private matDialog: MatDialog,
     private translate: TranslateService,
-    private slideInService: IxSlideInService,
+    private slideInService: SlideInService,
     private loader: AppLoaderService,
     private dialogService: DialogService,
     private errorHandler: ErrorHandlerService,
@@ -203,7 +237,7 @@ export class BootEnvironmentListComponent implements OnInit {
     });
   }
 
-  handleSlideInClosed(slideInRef: IxSlideInRef<unknown>): void {
+  handleSlideInClosed(slideInRef: SlideInRef<unknown>): void {
     slideInRef.slideInClosed$.pipe(
       filter(Boolean),
       untilDestroyed(this),

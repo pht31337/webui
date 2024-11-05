@@ -22,7 +22,7 @@ import { selectJobs } from 'app/modules/jobs/store/job.selectors';
 import { PageHeaderComponent } from 'app/modules/page-header/page-title-header/page-header.component';
 import { RsyncTaskFormComponent } from 'app/pages/data-protection/rsync-task/rsync-task-form/rsync-task-form.component';
 import { RsyncTaskListComponent } from 'app/pages/data-protection/rsync-task/rsync-task-list/rsync-task-list.component';
-import { IxChainedSlideInService } from 'app/services/ix-chained-slide-in.service';
+import { ChainedSlideInService } from 'app/services/chained-slide-in.service';
 import { TaskService } from 'app/services/task.service';
 import { WebSocketService } from 'app/services/ws.service';
 import { selectPreferences } from 'app/store/preferences/preferences.selectors';
@@ -86,7 +86,7 @@ describe('RsyncTaskListComponent', () => {
       IxTableColumnsSelectorComponent,
     ],
     providers: [
-      mockProvider(IxChainedSlideInService, {
+      mockProvider(ChainedSlideInService, {
         open: jest.fn(() => of()),
       }),
       mockAuth(),
@@ -192,7 +192,7 @@ describe('RsyncTaskListComponent', () => {
     const editIcon = await table.getHarnessInRow(IxIconHarness.with({ name: 'edit' }), '/mnt/Pool1');
     await editIcon.click();
 
-    expect(spectator.inject(IxChainedSlideInService).open).toHaveBeenCalledWith(
+    expect(spectator.inject(ChainedSlideInService).open).toHaveBeenCalledWith(
       RsyncTaskFormComponent,
       true,
       tasks[0],
@@ -210,7 +210,7 @@ describe('RsyncTaskListComponent', () => {
   });
 
   it('runs a task when run button is pressed', async () => {
-    const runIcon = await table.getHarnessInRow(IxIconHarness.with({ name: 'play_arrow' }), '/mnt/Pool1');
+    const runIcon = await table.getHarnessInRow(IxIconHarness.with({ name: 'mdi-play-circle' }), '/mnt/Pool1');
     await runIcon.click();
 
     expect(spectator.inject(WebSocketService).job).toHaveBeenCalledWith('rsynctask.run', [1]);

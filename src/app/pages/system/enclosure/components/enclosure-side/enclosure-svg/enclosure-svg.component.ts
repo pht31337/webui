@@ -16,6 +16,7 @@ import {
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { delay } from 'rxjs';
 import { DashboardEnclosureSlot } from 'app/interfaces/enclosure.interface';
 import { SvgCacheService } from 'app/pages/system/enclosure/services/svg-cache.service';
@@ -37,6 +38,8 @@ export type TintingFunction = (slot: DashboardEnclosureSlot | null) => string | 
       ]),
     ]),
   ],
+  standalone: true,
+  imports: [NgxSkeletonLoaderModule],
 })
 export class EnclosureSvgComponent implements OnDestroy {
   readonly svgUrl = input.required<string>();
@@ -81,6 +84,7 @@ export class EnclosureSvgComponent implements OnDestroy {
         untilDestroyed(this),
       )
       .subscribe((svg) => {
+        // eslint-disable-next-line sonarjs/no-angular-bypass-sanitization
         this.svg.set(this.sanitizer.bypassSecurityTrustHtml(svg));
       });
   }, { allowSignalWrites: true });

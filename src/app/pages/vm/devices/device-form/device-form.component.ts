@@ -34,10 +34,10 @@ import { IxExplorerComponent } from 'app/modules/forms/ix-forms/components/ix-ex
 import { IxFieldsetComponent } from 'app/modules/forms/ix-forms/components/ix-fieldset/ix-fieldset.component';
 import { IxInputComponent } from 'app/modules/forms/ix-forms/components/ix-input/ix-input.component';
 import { IxSelectComponent } from 'app/modules/forms/ix-forms/components/ix-select/ix-select.component';
-import { IxModalHeaderComponent } from 'app/modules/forms/ix-forms/components/ix-slide-in/components/ix-modal-header/ix-modal-header.component';
-import { IxSlideInRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in-ref';
-import { SLIDE_IN_DATA } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in.token';
 import { FormErrorHandlerService } from 'app/modules/forms/ix-forms/services/form-error-handler.service';
+import { ModalHeaderComponent } from 'app/modules/slide-ins/components/modal-header/modal-header.component';
+import { SlideInRef } from 'app/modules/slide-ins/slide-in-ref';
+import { SLIDE_IN_DATA } from 'app/modules/slide-ins/slide-in.token';
 import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { TestDirective } from 'app/modules/test-id/test.directive';
 import { FilesystemService } from 'app/services/filesystem.service';
@@ -54,7 +54,7 @@ const specifyCustom = T('Specify custom');
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
-    IxModalHeaderComponent,
+    ModalHeaderComponent,
     MatCard,
     MatCardContent,
     ReactiveFormsModule,
@@ -154,6 +154,7 @@ export class DeviceFormComponent implements OnInit {
       return options;
     }),
   );
+
   readonly usbControllerOptions$ = this.ws.call('vm.device.usb_controller_choices').pipe(
     map((usbControllers) => {
       return Object.entries(usbControllers).map(([key, controller]) => {
@@ -164,10 +165,12 @@ export class DeviceFormComponent implements OnInit {
       });
     }),
   );
+
   readonly bindOptions$ = this.ws.call('vm.device.bind_choices').pipe(choicesToOptions());
   readonly resolutions$ = this.ws.call('vm.resolution_choices').pipe(choicesToOptions());
   readonly nicOptions$ = this.ws.call('vm.device.nic_attach_choices').pipe(choicesToOptions());
   readonly nicTypes$ = of(mapToOptions(vmNicTypeLabels, this.translate));
+
   readonly passthroughProvider = new SimpleAsyncComboboxProvider(
     this.ws.call('vm.device.passthrough_device_choices').pipe(
       map((passthroughDevices) => {
@@ -180,6 +183,7 @@ export class DeviceFormComponent implements OnInit {
       }),
     ),
   );
+
   readonly zvolProvider = new SimpleAsyncComboboxProvider(
     this.ws.call('vm.device.disk_choices').pipe(choicesToOptions()),
   );
@@ -197,12 +201,12 @@ export class DeviceFormComponent implements OnInit {
   ]);
 
   get typeSpecificForm(): DeviceFormComponent['cdromForm']
-  | DeviceFormComponent['diskForm']
-  | DeviceFormComponent['nicForm']
-  | DeviceFormComponent['rawFileForm']
-  | DeviceFormComponent['pciForm']
-  | DeviceFormComponent['usbForm']
-  | DeviceFormComponent['displayForm'] {
+    | DeviceFormComponent['diskForm']
+    | DeviceFormComponent['nicForm']
+    | DeviceFormComponent['rawFileForm']
+    | DeviceFormComponent['pciForm']
+    | DeviceFormComponent['usbForm']
+    | DeviceFormComponent['displayForm'] {
     switch (this.typeControl.value) {
       case VmDeviceType.Cdrom:
         return this.cdromForm;
@@ -236,7 +240,7 @@ export class DeviceFormComponent implements OnInit {
     private errorHandler: FormErrorHandlerService,
     private cdr: ChangeDetectorRef,
     private dialogService: DialogService,
-    private slideInRef: IxSlideInRef<DeviceFormComponent>,
+    private slideInRef: SlideInRef<DeviceFormComponent>,
     @Inject(SLIDE_IN_DATA) private slideInData: { virtualMachineId: number; device: VmDevice },
   ) {}
 

@@ -9,18 +9,19 @@ import { mockCall, mockWebSocket } from 'app/core/testing/utils/mock-websocket.u
 import { CloudSyncProviderName } from 'app/enums/cloudsync-provider.enum';
 import { CloudBackup } from 'app/interfaces/cloud-backup.interface';
 import { DialogService } from 'app/modules/dialog/dialog.service';
-import { CloudCredentialsSelectModule } from 'app/modules/forms/custom-selects/cloud-credentials-select/cloud-credentials-select.module';
-import { ChainedRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/chained-component-ref';
+import {
+  CloudCredentialsSelectComponent,
+} from 'app/modules/forms/custom-selects/cloud-credentials-select/cloud-credentials-select.component';
 import { IxFormHarness } from 'app/modules/forms/ix-forms/testing/ix-form.harness';
-import { SchedulerModule } from 'app/modules/scheduler/scheduler.module';
+import { ChainedRef } from 'app/modules/slide-ins/chained-component-ref';
 import { CloudBackupFormComponent } from 'app/pages/data-protection/cloud-backup/cloud-backup-form/cloud-backup-form.component';
 import { googlePhotosCreds, googlePhotosProvider, storjProvider } from 'app/pages/data-protection/cloudsync/cloudsync-wizard/cloudsync-wizard.testing.utils';
 import {
   TransferModeExplanationComponent,
 } from 'app/pages/data-protection/cloudsync/transfer-mode-explanation/transfer-mode-explanation.component';
+import { ChainedSlideInService } from 'app/services/chained-slide-in.service';
 import { CloudCredentialService } from 'app/services/cloud-credential.service';
 import { FilesystemService } from 'app/services/filesystem.service';
-import { IxChainedSlideInService } from 'app/services/ix-chained-slide-in.service';
 import { WebSocketService } from 'app/services/ws.service';
 
 describe('CloudBackupFormComponent', () => {
@@ -77,11 +78,8 @@ describe('CloudBackupFormComponent', () => {
   const createComponent = createComponentFactory({
     component: CloudBackupFormComponent,
     imports: [
-      SchedulerModule,
-      CloudCredentialsSelectModule,
+      CloudCredentialsSelectComponent,
       ReactiveFormsModule,
-    ],
-    declarations: [
       TransferModeExplanationComponent,
     ],
     providers: [
@@ -90,9 +88,8 @@ describe('CloudBackupFormComponent', () => {
       mockWebSocket([
         mockCall('cloud_backup.create', existingTask),
         mockCall('cloud_backup.update', existingTask),
-        mockCall('cloudsync.create_bucket'),
       ]),
-      mockProvider(IxChainedSlideInService, {
+      mockProvider(ChainedSlideInService, {
         open: jest.fn(() => of()),
         components$: of([]),
       }),
@@ -128,12 +125,7 @@ describe('CloudBackupFormComponent', () => {
       const saveButton = await loader.getHarness(MatButtonHarness.with({ text: 'Save' }));
       await saveButton.click();
 
-      expect(spectator.inject(WebSocketService).call).toHaveBeenNthCalledWith(1, 'cloudsync.create_bucket', [
-        2,
-        'brand-new-bucket',
-      ]);
-
-      expect(spectator.inject(WebSocketService).call).toHaveBeenNthCalledWith(2, 'cloud_backup.create', [{
+      expect(spectator.inject(WebSocketService).call).toHaveBeenCalledWith('cloud_backup.create', [{
         args: '',
         attributes: { folder: '/', bucket: 'brand-new-bucket' },
         bwlimit: [],

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  filter,
   forkJoin, map, Observable, switchMap, tap,
 } from 'rxjs';
 import { DockerConfig, DockerStatusData } from 'app/enums/docker-config.interface';
@@ -14,7 +15,7 @@ import { WebSocketService } from 'app/services/ws.service';
 
 export interface DockerConfigState {
   isLoading: boolean;
-  pool: string;
+  dockerConfig: DockerConfig;
   nvidiaDriversInstalled: boolean;
   lacksNvidiaDrivers: boolean;
   statusData: DockerStatusData;
@@ -22,7 +23,7 @@ export interface DockerConfigState {
 
 const initialState: DockerConfigState = {
   isLoading: false,
-  pool: null,
+  dockerConfig: null,
   nvidiaDriversInstalled: false,
   lacksNvidiaDrivers: false,
   statusData: {
@@ -34,10 +35,14 @@ const initialState: DockerConfigState = {
 @Injectable()
 export class DockerStore extends ComponentStore<DockerConfigState> {
   readonly isLoading$ = this.select((state) => state.isLoading);
-  readonly selectedPool$ = this.select((state) => state.pool);
+  readonly dockerConfig$ = this.select((state) => state.dockerConfig);
+  readonly selectedPool$ = this.select((state) => state.dockerConfig?.pool || null);
   readonly nvidiaDriversInstalled$ = this.select((state) => state.nvidiaDriversInstalled);
   readonly lacksNvidiaDrivers$ = this.select((state) => state.lacksNvidiaDrivers);
-  readonly isDockerStarted$ = this.select((state) => DockerStatus.Running === state.statusData.status);
+  readonly isDockerStarted$ = this.select((state) => {
+    return state.statusData.status == null ? null : DockerStatus.Running === state.statusData.status;
+  });
+
   readonly status$ = this.select((state) => state.statusData.status);
   readonly statusDescription$ = this.select((state) => state.statusData.description);
 
@@ -65,7 +70,7 @@ export class DockerStore extends ComponentStore<DockerConfigState> {
       tap(
         ([dockerConfig, statusData, lacksNvidiaDrivers]: [DockerConfig, DockerStatusData, boolean]) => {
           this.patchState({
-            pool: dockerConfig.pool,
+            dockerConfig,
             nvidiaDriversInstalled: dockerConfig.nvidia,
             lacksNvidiaDrivers,
             statusData,
@@ -94,20 +99,15 @@ export class DockerStore extends ComponentStore<DockerConfigState> {
       { title: this.translate.instant('Configuring...') },
     )
       .afterClosed()
-      .pipe(
-        tap((job) => {
-          if (job.state === JobState.Success) {
-            this.patchState({
-              pool: poolName,
-            });
-          } else if ([JobState.Failed, JobState.Aborted, JobState.Error].includes(job.state)) {
-            this.patchState({
-              pool: null,
-            });
-          }
-        }),
-        this.errorHandler.catchError(),
-      );
+      .pipe(this.errorHandler.catchError());
+  }
+
+  reloadDockerConfig(): Observable<DockerConfig> {
+    return this.getDockerConfig().pipe(
+      tap((dockerConfig) => {
+        this.patchState({ dockerConfig });
+      }),
+    );
   }
 
   setDockerNvidia(nvidiaDriversInstalled: boolean): Observable<Job<DockerConfig>> {
@@ -140,5 +140,14 @@ export class DockerStore extends ComponentStore<DockerConfigState> {
         this.patchState({ statusData });
       }),
     );
+  }
+
+  dockerConfigEventUpdates(): Observable<DockerConfig> {
+    return this.ws.subscribe('core.get_jobs')
+      .pipe(
+        filter((event) => event.fields.method === 'docker.update' && !!event.fields.result),
+        map((event) => event.fields.result),
+        tap((dockerConfig: DockerConfig) => this.patchState({ dockerConfig })),
+      );
   }
 }

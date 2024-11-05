@@ -19,15 +19,17 @@ import {
 } from 'app/interfaces/dynamic-form-schema.interface';
 import { Option } from 'app/interfaces/option.interface';
 import { CustomUntypedFormField } from 'app/modules/forms/ix-dynamic-form/components/ix-dynamic-form/classes/custom-untyped-form-field';
-import { IxDynamicFormModule } from 'app/modules/forms/ix-dynamic-form/ix-dynamic-form.module';
+import {
+  IxDynamicFormComponent,
+} from 'app/modules/forms/ix-dynamic-form/components/ix-dynamic-form/ix-dynamic-form.component';
 import { FormActionsComponent } from 'app/modules/forms/ix-forms/components/form-actions/form-actions.component';
 import { IxFieldsetComponent } from 'app/modules/forms/ix-forms/components/ix-fieldset/ix-fieldset.component';
 import { IxInputComponent } from 'app/modules/forms/ix-forms/components/ix-input/ix-input.component';
 import { IxSelectComponent } from 'app/modules/forms/ix-forms/components/ix-select/ix-select.component';
-import { IxModalHeaderComponent } from 'app/modules/forms/ix-forms/components/ix-slide-in/components/ix-modal-header/ix-modal-header.component';
-import { IxSlideInRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in-ref';
-import { SLIDE_IN_DATA } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in.token';
 import { FormErrorHandlerService } from 'app/modules/forms/ix-forms/services/form-error-handler.service';
+import { ModalHeaderComponent } from 'app/modules/slide-ins/components/modal-header/modal-header.component';
+import { SlideInRef } from 'app/modules/slide-ins/slide-in-ref';
+import { SLIDE_IN_DATA } from 'app/modules/slide-ins/slide-in.token';
 import { TestDirective } from 'app/modules/test-id/test.directive';
 import { WebSocketService } from 'app/services/ws.service';
 
@@ -43,19 +45,19 @@ interface DnsAuthenticatorList {
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
-    IxModalHeaderComponent,
+    ModalHeaderComponent,
     MatCard,
     MatCardContent,
     ReactiveFormsModule,
     IxFieldsetComponent,
     IxInputComponent,
     IxSelectComponent,
-    IxDynamicFormModule,
     FormActionsComponent,
     RequiresRolesDirective,
     MatButton,
     TestDirective,
     TranslateModule,
+    IxDynamicFormComponent,
   ],
 })
 export class AcmednsFormComponent implements OnInit {
@@ -98,7 +100,7 @@ export class AcmednsFormComponent implements OnInit {
   constructor(
     private translate: TranslateService,
     private formBuilder: FormBuilder,
-    private slideInRef: IxSlideInRef<AcmednsFormComponent>,
+    private slideInRef: SlideInRef<AcmednsFormComponent>,
     private errorHandler: FormErrorHandlerService,
     private cdr: ChangeDetectorRef,
     private ws: WebSocketService,

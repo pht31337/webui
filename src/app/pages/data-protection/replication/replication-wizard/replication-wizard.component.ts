@@ -4,8 +4,10 @@ import {
   Component,
   ViewChild,
 } from '@angular/core';
+import { MatCard, MatCardContent } from '@angular/material/card';
+import { MatStepper, MatStep, MatStepLabel } from '@angular/material/stepper';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { merge } from 'lodash-es';
 import {
   catchError, EMPTY, forkJoin, map, Observable, of, switchMap, tap,
@@ -30,9 +32,13 @@ import { ReplicationCreate, ReplicationTask } from 'app/interfaces/replication-t
 import { Schedule } from 'app/interfaces/schedule.interface';
 import { CreateZfsSnapshot, ZfsSnapshot } from 'app/interfaces/zfs-snapshot.interface';
 import { DialogService } from 'app/modules/dialog/dialog.service';
-import { ChainedRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/chained-component-ref';
+import {
+  UseIxIconsInStepperComponent,
+} from 'app/modules/ix-icon/use-ix-icons-in-stepper/use-ix-icons-in-stepper.component';
 import { AppLoaderService } from 'app/modules/loader/app-loader.service';
 import { crontabToSchedule } from 'app/modules/scheduler/utils/crontab-to-schedule.utils';
+import { ChainedRef } from 'app/modules/slide-ins/chained-component-ref';
+import { ModalHeader2Component } from 'app/modules/slide-ins/components/modal-header2/modal-header2.component';
 import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { ReplicationWizardData } from 'app/pages/data-protection/replication/replication-wizard/replication-wizard-data.interface';
 import { ReplicationWhatAndWhereComponent } from 'app/pages/data-protection/replication/replication-wizard/steps/replication-what-and-where/replication-what-and-where.component';
@@ -49,6 +55,19 @@ import { WebSocketService } from 'app/services/ws.service';
   styleUrls: ['./replication-wizard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ReplicationService],
+  standalone: true,
+  imports: [
+    ModalHeader2Component,
+    MatCard,
+    MatCardContent,
+    MatStepper,
+    MatStep,
+    MatStepLabel,
+    ReplicationWhatAndWhereComponent,
+    ReplicationWhenComponent,
+    TranslateModule,
+    UseIxIconsInStepperComponent,
+  ],
 })
 export class ReplicationWizardComponent {
   @ViewChild(ReplicationWhatAndWhereComponent) whatAndWhere: ReplicationWhatAndWhereComponent;
@@ -134,7 +153,10 @@ export class ReplicationWizardComponent {
       switchMap((createdReplication) => {
         if (values.schedule_method === ScheduleMethod.Once && createdReplication) {
           return this.runReplicationOnce(createdReplication).pipe(
-            catchError((err) => { this.handleError(err); return EMPTY; }),
+            catchError((err) => {
+              this.handleError(err);
+              return EMPTY;
+            }),
             switchMap(() => of(createdReplication)),
           );
         }
@@ -400,7 +422,8 @@ export class ReplicationWizardComponent {
       if (requestsTasks.length) {
         return forkJoin(requestsTasks).pipe(
           map((createdSnapshotTasks) => {
-            return this.createdSnapshotTasks = (createdSnapshotTasks || []).filter((task) => !!task);
+            this.createdSnapshotTasks = (createdSnapshotTasks || []).filter((task) => !!task);
+            return this.createdSnapshotTasks;
           }),
         );
       }

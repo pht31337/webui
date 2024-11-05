@@ -1,26 +1,44 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
+import { AsyncPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy, Component, OnInit, ChangeDetectorRef,
 } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import {
+  MatAccordion, MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle,
+} from '@angular/material/expansion';
+import { MatList, MatListItem } from '@angular/material/list';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
+import { UiSearchDirective } from 'app/directives/ui-search.directive';
 import { TopologyItemType } from 'app/enums/v-dev-type.enum';
 import { DeviceNestedDataNode } from 'app/interfaces/device-nested-data-node.interface';
 import { PoolInstance } from 'app/interfaces/pool.interface';
 import { TopologyItem } from 'app/interfaces/storage.interface';
 import { DialogService } from 'app/modules/dialog/dialog.service';
+import { IxIconComponent } from 'app/modules/ix-icon/ix-icon.component';
+import { NestedTreeNodeComponent } from 'app/modules/ix-tree/components/nested-tree-node/nested-tree-node.component';
+import { TreeNodeComponent } from 'app/modules/ix-tree/components/tree-node/tree-node.component';
+import { TreeViewComponent } from 'app/modules/ix-tree/components/tree-view/tree-view.component';
+import { TreeNodeDefDirective } from 'app/modules/ix-tree/directives/tree-node-def.directive';
+import { TreeNodeOutletDirective } from 'app/modules/ix-tree/directives/tree-node-outlet.directive';
+import { TreeNodeToggleDirective } from 'app/modules/ix-tree/directives/tree-node-toggle.directive';
 import { NestedTreeDataSource } from 'app/modules/ix-tree/nested-tree-datasource';
 import { AppLoaderService } from 'app/modules/loader/app-loader.service';
+import { FakeProgressBarComponent } from 'app/modules/loader/components/fake-progress-bar/fake-progress-bar.component';
+import { FormatDateTimePipe } from 'app/modules/pipes/format-date-time/format-datetime.pipe';
 import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
+import { TestDirective } from 'app/modules/test-id/test.directive';
 import { BootPoolAttachDialogComponent } from 'app/pages/system/bootenv/boot-pool-attach/boot-pool-attach-dialog.component';
 import { BootPoolReplaceDialogComponent } from 'app/pages/system/bootenv/boot-pool-replace/boot-pool-replace-dialog.component';
 import { bootEnvStatusElements } from 'app/pages/system/bootenv/bootenv-status/bootenv-status.elements';
 import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { WebSocketService } from 'app/services/ws.service';
+import { BootenvNodeItemComponent } from './bootenv-node-item/bootenv-node-item.component';
 
 export enum BootPoolActionType {
   Replace = 'replace',
@@ -38,6 +56,30 @@ export interface BootPoolActionEvent {
   templateUrl: './bootenv-status.component.html',
   styleUrls: ['./bootenv-status.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    FakeProgressBarComponent,
+    UiSearchDirective,
+    MatAccordion,
+    MatExpansionPanel,
+    MatExpansionPanelHeader,
+    MatExpansionPanelTitle,
+    MatList,
+    MatListItem,
+    BootenvNodeItemComponent,
+    MatIconButton,
+    TestDirective,
+    IxIconComponent,
+    TranslateModule,
+    FormatDateTimePipe,
+    AsyncPipe,
+    TreeViewComponent,
+    TreeNodeComponent,
+    TreeNodeDefDirective,
+    TreeNodeToggleDirective,
+    NestedTreeNodeComponent,
+    TreeNodeOutletDirective,
+  ],
 })
 export class BootStatusListComponent implements OnInit {
   protected readonly searchableElements = bootEnvStatusElements;
@@ -47,6 +89,7 @@ export class BootStatusListComponent implements OnInit {
   treeControl = new NestedTreeControl<DeviceNestedDataNode, string>((vdev) => vdev.children, {
     trackBy: (vdev) => vdev.guid,
   });
+
   poolInstance: PoolInstance;
   readonly hasNestedChild = (_: number, node: DeviceNestedDataNode): boolean => {
     return Boolean(node?.children?.length);

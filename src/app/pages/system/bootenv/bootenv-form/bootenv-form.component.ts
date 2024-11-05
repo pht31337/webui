@@ -5,11 +5,14 @@ import {
   OnInit,
   Inject,
 } from '@angular/core';
-import { Validators } from '@angular/forms';
+import { Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { MatCard, MatCardContent } from '@angular/material/card';
 import { FormBuilder, FormControl } from '@ngneat/reactive-forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { nameValidatorRegex } from 'app/constants/name-validator.constant';
+import { RequiresRolesDirective } from 'app/directives/requires-roles/requires-roles.directive';
 import { BootEnvironmentAction } from 'app/enums/boot-environment-action.enum';
 import { Role } from 'app/enums/role.enum';
 import { helptextSystemBootenv } from 'app/helptext/system/boot-env';
@@ -18,9 +21,14 @@ import {
   CreateBootenvParams,
   UpdateBootenvParams,
 } from 'app/interfaces/bootenv.interface';
-import { IxSlideInRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in-ref';
-import { SLIDE_IN_DATA } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in.token';
+import { FormActionsComponent } from 'app/modules/forms/ix-forms/components/form-actions/form-actions.component';
+import { IxFieldsetComponent } from 'app/modules/forms/ix-forms/components/ix-fieldset/ix-fieldset.component';
+import { IxInputComponent } from 'app/modules/forms/ix-forms/components/ix-input/ix-input.component';
 import { FormErrorHandlerService } from 'app/modules/forms/ix-forms/services/form-error-handler.service';
+import { ModalHeaderComponent } from 'app/modules/slide-ins/components/modal-header/modal-header.component';
+import { SlideInRef } from 'app/modules/slide-ins/slide-in-ref';
+import { SLIDE_IN_DATA } from 'app/modules/slide-ins/slide-in.token';
+import { TestDirective } from 'app/modules/test-id/test.directive';
 import { WebSocketService } from 'app/services/ws.service';
 
 @UntilDestroy()
@@ -29,6 +37,20 @@ import { WebSocketService } from 'app/services/ws.service';
   templateUrl: './bootenv-form.component.html',
   styleUrls: ['./bootenv-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    ModalHeaderComponent,
+    MatCard,
+    MatCardContent,
+    ReactiveFormsModule,
+    IxFieldsetComponent,
+    IxInputComponent,
+    FormActionsComponent,
+    RequiresRolesDirective,
+    MatButton,
+    TestDirective,
+    TranslateModule,
+  ],
 })
 export class BootEnvironmentFormComponent implements OnInit {
   protected readonly requiredRoles = [Role.FullAdmin];
@@ -54,7 +76,7 @@ export class BootEnvironmentFormComponent implements OnInit {
     private ws: WebSocketService,
     private errorHandler: FormErrorHandlerService,
     private changeDetectorRef: ChangeDetectorRef,
-    private slideInRef: IxSlideInRef<BootEnvironmentFormComponent>,
+    private slideInRef: SlideInRef<BootEnvironmentFormComponent>,
     @Inject(SLIDE_IN_DATA) private slideInData: { operation: BootEnvironmentAction; name?: string },
   ) {}
 
@@ -105,67 +127,75 @@ export class BootEnvironmentFormComponent implements OnInit {
   onSubmit(): void {
     this.isFormLoading = true;
     switch (this.operation) {
-      case this.Operations.Create: {
-        const createParams: CreateBootenvParams = [{
-          name: this.formGroup.value.name,
-        }];
-
-        this.ws.call('bootenv.create', createParams).pipe(untilDestroyed(this)).subscribe({
-          next: () => {
-            this.isFormLoading = false;
-            this.slideInRef.close(true);
-          },
-          error: (error: unknown) => {
-            this.isFormLoading = false;
-            this.slideInRef.close(false);
-            this.errorHandler.handleWsFormError(error, this.formGroup);
-          },
-        });
-
+      case this.Operations.Create:
+        this.createEnvironment();
         break;
-      }
-      case this.Operations.Rename: {
-        const renameParams: UpdateBootenvParams = [
-          this.currentName,
-          {
-            name: this.formGroup.value.name,
-          },
-        ];
-
-        this.ws.call('bootenv.update', renameParams).pipe(untilDestroyed(this)).subscribe({
-          next: () => {
-            this.isFormLoading = false;
-            this.slideInRef.close(true);
-          },
-          error: (error: unknown) => {
-            this.isFormLoading = false;
-            this.slideInRef.close(false);
-            this.errorHandler.handleWsFormError(error, this.formGroup);
-          },
-        });
-
+      case this.Operations.Rename:
+        this.renameEnvironment();
         break;
-      }
-      case this.Operations.Clone: {
-        const cloneParams: CreateBootenvParams = [{
-          name: this.formGroup.value.name,
-          source: this.currentName,
-        }];
-
-        this.ws.call('bootenv.create', cloneParams).pipe(untilDestroyed(this)).subscribe({
-          next: () => {
-            this.isFormLoading = false;
-            this.slideInRef.close(true);
-          },
-          error: (error: unknown) => {
-            this.isFormLoading = false;
-            this.slideInRef.close(false);
-            this.errorHandler.handleWsFormError(error, this.formGroup);
-          },
-        });
-
+      case this.Operations.Clone:
+        this.cloneEnvironment();
         break;
-      }
+      default:
+        console.error('Unsupported operation');
     }
+  }
+
+  private createEnvironment(): void {
+    const createParams: CreateBootenvParams = [{
+      name: this.formGroup.value.name,
+    }];
+
+    this.ws.call('bootenv.create', createParams).pipe(untilDestroyed(this)).subscribe({
+      next: () => {
+        this.isFormLoading = false;
+        this.slideInRef.close(true);
+      },
+      error: (error: unknown) => {
+        this.isFormLoading = false;
+        this.slideInRef.close(false);
+        this.errorHandler.handleWsFormError(error, this.formGroup);
+      },
+    });
+  }
+
+  private renameEnvironment(): void {
+    const renameParams: UpdateBootenvParams = [
+      this.currentName,
+      {
+        name: this.formGroup.value.name,
+      },
+    ];
+
+    this.ws.call('bootenv.update', renameParams).pipe(untilDestroyed(this)).subscribe({
+      next: () => {
+        this.isFormLoading = false;
+        this.slideInRef.close(true);
+      },
+      error: (error: unknown) => {
+        this.isFormLoading = false;
+        this.slideInRef.close(false);
+        this.errorHandler.handleWsFormError(error, this.formGroup);
+      },
+    });
+  }
+
+  private cloneEnvironment(): void {
+    const cloneParams: CreateBootenvParams = [{
+      name: this.formGroup.value.name,
+      source: this.currentName,
+    }];
+
+    this.ws.call('bootenv.create', cloneParams).pipe(untilDestroyed(this)).subscribe({
+      next: () => {
+        this.isFormLoading = false;
+        this.slideInRef.close(true);
+      },
+      error: (error: unknown) => {
+        this.isFormLoading = false;
+        this.slideInRef.close(false);
+        this.errorHandler.handleWsFormError(error, this.formGroup);
+      },
+    });
   }
 }

@@ -14,16 +14,15 @@ import { TransferMode } from 'app/enums/transfer-mode.enum';
 import { CloudSyncTaskUi } from 'app/interfaces/cloud-sync-task.interface';
 import { DialogService } from 'app/modules/dialog/dialog.service';
 import {
-  CloudCredentialsSelectModule,
-} from 'app/modules/forms/custom-selects/cloud-credentials-select/cloud-credentials-select.module';
-import { ChainedRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/chained-component-ref';
-import { SchedulerModule } from 'app/modules/scheduler/scheduler.module';
+  CloudCredentialsSelectComponent,
+} from 'app/modules/forms/custom-selects/cloud-credentials-select/cloud-credentials-select.component';
+import { ChainedRef } from 'app/modules/slide-ins/chained-component-ref';
 import { CloudSyncFormComponent } from 'app/pages/data-protection/cloudsync/cloudsync-form/cloudsync-form.component';
 import {
   TransferModeExplanationComponent,
 } from 'app/pages/data-protection/cloudsync/transfer-mode-explanation/transfer-mode-explanation.component';
+import { ChainedSlideInService } from 'app/services/chained-slide-in.service';
 import { FilesystemService } from 'app/services/filesystem.service';
-import { IxChainedSlideInService } from 'app/services/ix-chained-slide-in.service';
 import { WebSocketService } from 'app/services/ws.service';
 
 describe('CloudSyncFormComponent', () => {
@@ -86,11 +85,8 @@ describe('CloudSyncFormComponent', () => {
   const createComponent = createComponentFactory({
     component: CloudSyncFormComponent,
     imports: [
-      SchedulerModule,
-      CloudCredentialsSelectModule,
+      CloudCredentialsSelectComponent,
       ReactiveFormsModule,
-    ],
-    declarations: [
       TransferModeExplanationComponent,
     ],
     providers: [
@@ -141,7 +137,7 @@ describe('CloudSyncFormComponent', () => {
           credentials_oauth: null,
         }]),
       ]),
-      mockProvider(IxChainedSlideInService, {
+      mockProvider(ChainedSlideInService, {
         open: jest.fn(() => of()),
         components$: of([]),
       }),

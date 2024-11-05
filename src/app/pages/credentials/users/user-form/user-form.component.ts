@@ -16,6 +16,7 @@ import {
 } from 'rxjs/operators';
 import { allCommands } from 'app/constants/all-commands.constant';
 import { RequiresRolesDirective } from 'app/directives/requires-roles/requires-roles.directive';
+import { WarnAboutUnsavedChangesDirective } from 'app/directives/warn-about-unsaved-changes/warn-about-unsaved-changes.directive';
 import { Role } from 'app/enums/role.enum';
 import { choicesToOptions } from 'app/helpers/operators/options.operators';
 import { helptextUsers } from 'app/helptext/account/user-form';
@@ -35,11 +36,6 @@ import { IxInputComponent } from 'app/modules/forms/ix-forms/components/ix-input
 import { IxPermissionsComponent } from 'app/modules/forms/ix-forms/components/ix-permissions/ix-permissions.component';
 import { IxSelectComponent } from 'app/modules/forms/ix-forms/components/ix-select/ix-select.component';
 import {
-  IxModalHeaderComponent,
-} from 'app/modules/forms/ix-forms/components/ix-slide-in/components/ix-modal-header/ix-modal-header.component';
-import { IxSlideInRef } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in-ref';
-import { SLIDE_IN_DATA } from 'app/modules/forms/ix-forms/components/ix-slide-in/ix-slide-in.token';
-import {
   IxSlideToggleComponent,
 } from 'app/modules/forms/ix-forms/components/ix-slide-toggle/ix-slide-toggle.component';
 import { IxTextareaComponent } from 'app/modules/forms/ix-forms/components/ix-textarea/ix-textarea.component';
@@ -48,6 +44,11 @@ import { IxValidatorsService } from 'app/modules/forms/ix-forms/services/ix-vali
 import { emailValidator } from 'app/modules/forms/ix-forms/validators/email-validation/email-validation';
 import { forbiddenValues } from 'app/modules/forms/ix-forms/validators/forbidden-values-validation/forbidden-values-validation';
 import { matchOthersFgValidator } from 'app/modules/forms/ix-forms/validators/password-validation/password-validation';
+import {
+  ModalHeaderComponent,
+} from 'app/modules/slide-ins/components/modal-header/modal-header.component';
+import { SlideInRef } from 'app/modules/slide-ins/slide-in-ref';
+import { SLIDE_IN_DATA } from 'app/modules/slide-ins/slide-in.token';
 import { SnackbarService } from 'app/modules/snackbar/services/snackbar.service';
 import { TestDirective } from 'app/modules/test-id/test.directive';
 import { userAdded, userChanged } from 'app/pages/credentials/users/store/user.actions';
@@ -69,7 +70,7 @@ const defaultHomePath = '/var/empty';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
-    IxModalHeaderComponent,
+    ModalHeaderComponent,
     ReactiveFormsModule,
     IxFieldsetComponent,
     IxInputComponent,
@@ -88,6 +89,7 @@ const defaultHomePath = '/var/empty';
     MatButton,
     TestDirective,
     TranslateModule,
+    WarnAboutUnsavedChangesDirective,
   ],
 })
 export class UserFormComponent implements OnInit {
@@ -102,6 +104,10 @@ export class UserFormComponent implements OnInit {
 
   get title(): string {
     return this.isNewUser ? this.translate.instant('Add User') : this.translate.instant('Edit User');
+  }
+
+  get isEditingBuiltinUser(): boolean {
+    return !this.isNewUser && this.editingUser.builtin;
   }
 
   form = this.fb.group({
@@ -163,11 +169,13 @@ export class UserFormComponent implements OnInit {
     shell: helptextUsers.user_form_shell_tooltip,
     locked: helptextUsers.user_form_lockuser_tooltip,
     smb: helptextUsers.user_form_smb_tooltip,
+    smbBuiltin: helptextUsers.smbBuiltin,
   };
 
   readonly groupOptions$ = this.ws.call('group.query').pipe(
     map((groups) => groups.map((group) => ({ label: group.group, value: group.id }))),
   );
+
   shellOptions$: Observable<Option[]>;
   readonly treeNodeProvider = this.filesystemService.getFilesystemNodeProvider({ directoriesOnly: true });
   readonly groupProvider = new SimpleAsyncComboboxProvider(this.groupOptions$);
@@ -216,7 +224,7 @@ export class UserFormComponent implements OnInit {
     private translate: TranslateService,
     private validatorsService: IxValidatorsService,
     private filesystemService: FilesystemService,
-    private slideInRef: IxSlideInRef<UserFormComponent>,
+    private slideInRef: SlideInRef<UserFormComponent>,
     private snackbar: SnackbarService,
     private storageService: StorageService,
     private downloadService: DownloadService,
@@ -382,7 +390,7 @@ export class UserFormComponent implements OnInit {
               this.store$.dispatch(userChanged({ user }));
             }
             this.isFormLoading = false;
-            this.slideInRef.close();
+            this.slideInRef.close(true);
             this.cdr.markForCheck();
           },
           error: (error: unknown) => {
@@ -449,6 +457,10 @@ export class UserFormComponent implements OnInit {
       this.form.controls.home.disable();
       this.form.controls.home_create.disable();
       this.form.controls.username.disable();
+    }
+
+    if (user.builtin) {
+      this.form.controls.smb.disable();
     }
 
     this.setNamesInUseValidator(user.username);

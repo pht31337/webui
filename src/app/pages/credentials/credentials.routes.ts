@@ -20,6 +20,11 @@ export const credentialsRoutes: Routes = [{
       data: { title: T('Users'), breadcrumb: T('Users'), icon: 'group' },
     },
     {
+      path: 'user-api-keys',
+      loadComponent: () => import('app/pages/credentials/users/user-api-keys/user-api-keys.component').then((module) => module.UserApiKeysComponent),
+      data: { title: T('User API Keys'), breadcrumb: T('Users'), icon: 'group' },
+    },
+    {
       path: 'groups',
       data: { title: T('Groups'), breadcrumb: T('Groups') },
       loadChildren: () => import('app/pages/credentials/groups/group.routes').then((module) => module.groupRoutes),
@@ -42,7 +47,7 @@ export const credentialsRoutes: Routes = [{
     },
     {
       path: 'two-factor',
-      loadChildren: () => import('app/pages/two-factor-auth/two-factor-auth.module').then((module) => module.TwoFactorAuthModule),
+      loadComponent: () => import('app/pages/two-factor-auth/two-factor.component').then((module) => module.TwoFactorComponent),
       data: { title: T('Two Factor Auth'), breadcrumb: T('Two Factor Auth') },
     },
     {

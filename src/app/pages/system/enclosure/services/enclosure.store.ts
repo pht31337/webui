@@ -53,14 +53,17 @@ export class EnclosureStore extends ComponentStore<EnclosureState> {
     const elements = this.selectedEnclosure().elements[EnclosureElementType.ArrayDeviceSlot];
     return elements[this.stateAsSignal().selectedSlotNumber];
   });
+
   readonly selectedEnclosure = computed(() => {
     const state = this.stateAsSignal();
     return state.enclosures[state.selectedEnclosureIndex];
   });
+
   readonly selectedEnclosureSlots = computed(() => {
     const slots = this.selectedEnclosure()?.elements?.[EnclosureElementType.ArrayDeviceSlot] || {};
     return Object.values(slots);
   });
+
   readonly selectedView = computed(() => this.stateAsSignal().selectedView);
   readonly selectedSide = computed(() => this.stateAsSignal().selectedSide);
   readonly enclosures = computed(() => this.stateAsSignal().enclosures);
@@ -85,6 +88,15 @@ export class EnclosureStore extends ComponentStore<EnclosureState> {
   });
 
   readonly enclosureLabel = computed(() => getEnclosureLabel(this.selectedEnclosure()));
+
+  readonly hasMoreThanOneSide = computed(() => {
+    return [
+      this.selectedEnclosure().front_loaded,
+      this.selectedEnclosure().top_loaded,
+      this.selectedEnclosure().rear_slots > 0,
+      this.selectedEnclosure().internal_slots > 0,
+    ].filter(Boolean).length > 1;
+  });
 
   constructor(
     private ws: WebSocketService,

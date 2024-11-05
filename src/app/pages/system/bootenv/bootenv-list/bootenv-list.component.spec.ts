@@ -13,8 +13,8 @@ import { IxTableHarness } from 'app/modules/ix-table/components/ix-table/ix-tabl
 import { PageHeaderComponent } from 'app/modules/page-header/page-title-header/page-header.component';
 import { BootEnvironmentListComponent } from 'app/pages/system/bootenv/bootenv-list/bootenv-list.component';
 import { fakeBootEnvironmentsDataSource } from 'app/pages/system/bootenv/test/fake-boot-environments';
-import { IxSlideInService } from 'app/services/ix-slide-in.service';
 import { LocaleService } from 'app/services/locale.service';
+import { SlideInService } from 'app/services/slide-in.service';
 import { WebSocketService } from 'app/services/ws.service';
 
 describe('BootEnvironmentListComponent', () => {
@@ -43,7 +43,7 @@ describe('BootEnvironmentListComponent', () => {
         confirm: jest.fn(() => of(true)),
       }),
       mockProvider(MatSnackBar),
-      mockProvider(IxSlideInService, {
+      mockProvider(SlideInService, {
         onClose$: new Subject<unknown>(),
         open: jest.fn(),
       }),
@@ -67,7 +67,7 @@ describe('BootEnvironmentListComponent', () => {
       [
         '',
         '22.12-MASTER-20220808-020013',
-        'Now/Reboot',
+        'Now/Restart',
         '2022-08-09 06:52:00',
         '2.61 GiB',
         'No',
