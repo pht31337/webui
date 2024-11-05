@@ -1,0 +1,22 @@
+@import 'scss-imports/variables';
+
+:host {
+  align-items: center;
+  background-color: var(--topbar);
+  column-gap: 8px;
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  height: $topbar-height;
+  justify-content: center;
+}
+
+.logo {
+  height: 25px;
+  margin-bottom: 1px;
+}
+
+.logo-text {
+  height: 27px;
+  margin-right: 4px;
+}

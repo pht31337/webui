@@ -1,0 +1,22 @@
+<mat-nav-list
+  role="navigation"
+  class="nav-list"
+  [attr.aria-label]="'Main menu' | translate"
+>
+  @for (item of menuItems; track item; let i = $index) {
+    @if (!item.isVisible$ || (item.isVisible$ | async)) {
+      <ix-menu-item
+        [item]="item"
+        [collapsed]="collapsed()"
+        (click)="onItemClicked(item)"
+      ></ix-menu-item>
+
+      @if (item === secondaryMenuOpenedFor()) {
+        <ix-secondary-menu
+          [menuName]="secondaryMenuOpenedFor().name"
+          [subMenuItems]="secondaryMenuOpenedFor().sub"
+        ></ix-secondary-menu>
+      }
+    }
+  }
+</mat-nav-list>

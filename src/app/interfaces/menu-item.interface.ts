@@ -8,10 +8,10 @@ export enum MenuItemType {
 
 export interface MenuItem {
   type: MenuItemType;
-  name?: string; // Used as display text for item and title for separator type
-  state?: string;
-  icon?: MarkedIcon;
-  tooltip?: string;
+  name: string; // Used as display text for item and title for separator type
+  state: string;
+  icon: MarkedIcon;
+
   sub?: SubMenuItem[];
   isVisible$?: Observable<boolean>;
 }

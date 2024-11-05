@@ -1,5 +1,3 @@
-import { SidenavStatusData } from 'app/interfaces/events/sidenav-status-event.interface';
-
 interface Column {
   name: string;
   prop: string;
@@ -19,7 +17,7 @@ export interface TableDisplayedColumns {
 export interface Preferences {
   dateFormat: string;
   timeFormat: string;
-  sidenavStatus: SidenavStatusData;
+  isSidenavCollapsed: boolean;
   userTheme: string;
   tableDisplayedColumns: TableDisplayedColumns[];
   hideBuiltinUsers: boolean;

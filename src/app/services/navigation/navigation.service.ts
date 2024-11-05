@@ -26,49 +26,42 @@ export class NavigationService {
     {
       name: T('Dashboard'),
       type: MenuItemType.Link,
-      tooltip: T('Dashboard'),
       icon: iconMarker('dashboard'),
       state: 'dashboard',
     },
     {
       name: T('Storage'),
       type: MenuItemType.Link,
-      tooltip: T('Storage'),
       icon: iconMarker('dns'),
       state: 'storage',
     },
     {
       name: T('Datasets'),
       type: MenuItemType.Link,
-      tooltip: T('Datasets'),
       icon: iconMarker('ix-dataset-root'),
       state: 'datasets',
     },
     {
       name: T('Shares'),
       type: MenuItemType.Link,
-      tooltip: T('Shares'),
       icon: iconMarker('folder_shared'),
       state: 'sharing',
     },
     {
       name: T('Data Protection'),
       type: MenuItemType.Link,
-      tooltip: T('Data Protection'),
       icon: iconMarker('security'),
       state: 'data-protection',
     },
     {
       name: T('Network'),
       type: MenuItemType.Link,
-      tooltip: T('Network'),
       icon: iconMarker('device_hub'),
       state: 'network',
     },
     {
       name: T('Credentials'),
       type: MenuItemType.SlideOut,
-      tooltip: T('Credentials'),
       icon: iconMarker('vpn_key'),
       state: 'credentials',
       sub: [
@@ -87,7 +80,6 @@ export class NavigationService {
     {
       name: T('Virtualization'),
       type: MenuItemType.Link,
-      tooltip: T('Virtualization'),
       icon: iconMarker('computer'),
       state: 'vm',
       isVisible$: this.hasVms$,
@@ -95,7 +87,6 @@ export class NavigationService {
     {
       name: T('Apps'),
       type: MenuItemType.Link,
-      tooltip: T('Apps'),
       icon: iconMarker('apps'),
       state: 'apps',
       isVisible$: this.hasApps$,
@@ -103,14 +94,12 @@ export class NavigationService {
     {
       name: T('Reporting'),
       type: MenuItemType.Link,
-      tooltip: T('Reports'),
       icon: iconMarker('insert_chart'),
       state: 'reportsdashboard/cpu',
     },
     {
       name: T('System'),
       type: MenuItemType.SlideOut,
-      tooltip: T('System'),
       icon: iconMarker('settings'),
       state: 'system',
       sub: [

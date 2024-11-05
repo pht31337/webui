@@ -1,0 +1,19 @@
+<a routerLink="/dashboard" class="logo" ixTest="main-logo">
+  <ix-icon
+    [fullSize]="true"
+    [name]="isDefaultTheme() ? iconMarker('ix-truenas-logo-mark-color'): iconMarker('ix-truenas-logo-mark')"
+  ></ix-icon>
+</a>
+
+@if (!collapsed()) {
+  <a
+    routerLink="/dashboard"
+    class="logo-text"
+    ixTest="main-logo"
+  >
+    <ix-icon
+      [fullSize]="true"
+      [name]="isDefaultTheme() ? iconMarker('ix-truenas-logo-type-color'): iconMarker('ix-truenas-logo-type')"
+    ></ix-icon>
+  </a>
+}

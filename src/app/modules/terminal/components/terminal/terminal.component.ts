@@ -11,7 +11,7 @@ import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import FontFaceObserver from 'fontfaceobserver';
-import { filter, take, tap } from 'rxjs/operators';
+import { take, tap } from 'rxjs/operators';
 import { ShellConnectedEvent } from 'app/interfaces/shell.interface';
 import { TerminalConfiguration } from 'app/interfaces/terminal.interface';
 import { ToolbarSliderComponent } from 'app/modules/forms/toolbar-slider/toolbar-slider.component';
@@ -100,9 +100,9 @@ export class TerminalComponent implements OnInit, OnDestroy {
       });
     }
 
+    // TODO: Why?
     this.store$.pipe(
       waitForPreferences,
-      filter((preferences) => Boolean(preferences.sidenavStatus)),
       untilDestroyed(this),
     ).subscribe(() => {
       if (this.shellConnected) {

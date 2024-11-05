@@ -4,11 +4,10 @@
       <mat-list-item
         *ixHasAccess="!subItem.hasAccess$ || (subItem.hasAccess$ | async)"
         routerLinkActive="selected"
-        class="sidebar-list-item slide-in-nav-item"
+        class="menu-item"
         role="listitem"
-        (click)="toggleMenu.emit()"
       >
-        <a class="slidein-nav-link" [ixTest]="subItem.name" [routerLink]="['/', menuName(), subItem.state]">
+        <a [ixTest]="subItem.name" [routerLink]="['/', menuName(), subItem.state]">
           {{ subItem.name | translate }}
         </a>
       </mat-list-item>

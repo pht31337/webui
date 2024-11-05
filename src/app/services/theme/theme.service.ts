@@ -1,8 +1,10 @@
-import { Inject, Injectable } from '@angular/core';
+import {
+  computed, Inject, Injectable, signal,
+} from '@angular/core';
 import { TinyColor } from '@ctrl/tinycolor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@ngrx/store';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ThemeUtils } from 'app/core/classes/theme-utils/theme-utils';
 import { WINDOW } from 'app/helpers/window.helper';
@@ -17,18 +19,16 @@ import { selectTheme } from 'app/store/preferences/preferences.selectors';
   providedIn: 'root',
 })
 export class ThemeService {
-  defaultTheme = defaultTheme.name;
-  activeTheme = this.defaultTheme;
-  activeTheme$ = new BehaviorSubject<string>(this.defaultTheme);
+  readonly allThemes: Theme[] = allThemes;
 
-  allThemes: Theme[] = allThemes;
-  loadTheme$ = new Subject<string>();
-
+  private readonly defaultTheme = defaultTheme.name;
   private utils = new ThemeUtils();
 
-  get isDefaultTheme(): boolean {
-    return this.activeTheme === this.defaultTheme;
-  }
+  activeTheme = signal(this.defaultTheme);
+
+  loadTheme$ = new Subject<string>();
+
+  isDefaultTheme = computed(() => this.activeTheme() === this.defaultTheme);
 
   constructor(
     private store$: Store<AppState>,
@@ -52,9 +52,8 @@ export class ThemeService {
   }
 
   onThemeChanged(theme: string): void {
-    this.activeTheme = theme;
-    this.activeTheme$.next(theme);
-    const selectedTheme = this.findTheme(this.activeTheme);
+    this.activeTheme.set(theme);
+    const selectedTheme = this.findTheme(theme);
 
     this.setCssVars(selectedTheme);
     this.updateThemeInLocalStorage(selectedTheme);
@@ -70,9 +69,7 @@ export class ThemeService {
     this.store$.dispatch(themeNotFound());
   }
 
-  currentTheme(): Theme {
-    return this.findTheme(this.activeTheme);
-  }
+  currentTheme = computed(() => this.findTheme(this.activeTheme()));
 
   findTheme(name: string): Theme {
     const existingTheme = this.allThemes.find((theme) => theme.name === name);
@@ -162,10 +159,7 @@ export class ThemeService {
     return new TinyColor(css).isDark();
   }
 
-  isDarkTheme(name: string = this.activeTheme): boolean {
-    const theme = this.findTheme(name);
-    return this.darkTest(theme.bg2);
-  }
+  isDarkTheme = computed(() => this.darkTest(this.currentTheme().bg2));
 
   /**
    * Gets color pattern for active theme

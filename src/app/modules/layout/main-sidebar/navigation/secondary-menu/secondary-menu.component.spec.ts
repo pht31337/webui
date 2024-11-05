@@ -1,6 +1,8 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { of } from 'rxjs';
-import { SecondaryMenuComponent } from 'app/modules/layout/secondary-menu/secondary-menu.component';
+import {
+  SecondaryMenuComponent,
+} from 'app/modules/layout/main-sidebar/navigation/secondary-menu/secondary-menu.component';
 
 describe('SecondaryMenuComponent', () => {
   let spectator: Spectator<SecondaryMenuComponent>;

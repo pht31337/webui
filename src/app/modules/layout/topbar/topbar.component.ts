@@ -22,6 +22,7 @@ import { FeedbackDialogComponent } from 'app/modules/feedback/components/feedbac
 import { GlobalSearchTriggerComponent } from 'app/modules/global-search/components/global-search-trigger/global-search-trigger.component';
 import { IxIconComponent } from 'app/modules/ix-icon/ix-icon.component';
 import { selectUpdateJob } from 'app/modules/jobs/store/job.selectors';
+import { MainSidebarService } from 'app/modules/layout/main-sidebar/main-sidebar.service';
 import { CheckinIndicatorComponent } from 'app/modules/layout/topbar/checkin-indicator/checkin-indicator.component';
 import {
   DirectoryServicesIndicatorComponent,
@@ -41,7 +42,7 @@ import { SystemGeneralService } from 'app/services/system-general.service';
 import { ThemeService } from 'app/services/theme/theme.service';
 import { selectIsHaLicensed } from 'app/store/ha-info/ha-info.selectors';
 import { selectHasConsoleFooter } from 'app/store/system-config/system-config.selectors';
-import { alertIndicatorPressed, sidenavIndicatorPressed } from 'app/store/topbar/topbar.actions';
+import { alertIndicatorPressed } from 'app/store/topbar/topbar.actions';
 
 @UntilDestroy()
 @Component({
@@ -97,6 +98,7 @@ export class TopbarComponent implements OnInit {
     private matDialog: MatDialog,
     private store$: Store<AlertSlice>,
     private cdr: ChangeDetectorRef,
+    private sidebarService: MainSidebarService,
   ) {
     this.systemGeneralService.updateRunningNoticeSent.pipe(untilDestroyed(this)).subscribe(() => {
       this.updateNotificationSent = true;
@@ -155,8 +157,8 @@ export class TopbarComponent implements OnInit {
     this.store$.dispatch(alertIndicatorPressed());
   }
 
-  onSidenavIndicatorPressed(): void {
-    this.store$.dispatch(sidenavIndicatorPressed());
+  onSidebarTogglePressed(): void {
+    this.sidebarService.onTogglePressed();
   }
 
   updateInProgress(): void {

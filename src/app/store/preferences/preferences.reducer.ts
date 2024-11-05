@@ -14,7 +14,7 @@ import {
   themeNotFound,
   updateRebootAfterManualUpdate,
 } from 'app/store/preferences/preferences.actions';
-import { sidenavUpdated } from 'app/store/topbar/topbar.actions';
+import { sidenavToggled } from 'app/store/topbar/topbar.actions';
 import { snapshotExtraColumnsToggled, dashboardStateLoaded, noDashboardStateFound } from './preferences.actions';
 
 export interface PreferencesState {
@@ -39,7 +39,7 @@ export const preferencesReducer = createReducer(
   on(adminUiInitialized, () => ({ ...initialState, areLoaded: false })),
   on(preferencesLoaded, (state, { preferences }) => ({ ...state, preferences, areLoaded: true })),
   on(noPreferencesFound, (state) => ({ ...state, preferences: defaultPreferences, areLoaded: true })),
-  on(sidenavUpdated, (state, sidenavStatus) => updatePreferences(state, { sidenavStatus })),
+  on(sidenavToggled, (state, { isCollapsed }) => updatePreferences(state, { isSidenavCollapsed: isCollapsed })),
   on(preferredColumnsUpdated, (state, { columns }) => updatePreferences(state, {
     tableDisplayedColumns: columns,
   })),

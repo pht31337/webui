@@ -3,14 +3,11 @@ import { Injectable, signal } from '@angular/core';
 import { MatDrawerMode, MatSidenav } from '@angular/material/sidenav';
 import { Router, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Actions, ofType } from '@ngrx/effects';
+import { Actions } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { take, filter, distinctUntilChanged } from 'rxjs';
-import { SidenavStatusData } from 'app/interfaces/events/sidenav-status-event.interface';
+import { filter } from 'rxjs';
 import { SubMenuItem } from 'app/interfaces/menu-item.interface';
 import { AppState } from 'app/store';
-import { waitForPreferences } from 'app/store/preferences/preferences.selectors';
-import { sidenavIndicatorPressed, sidenavUpdated } from 'app/store/topbar/topbar.actions';
 
 export const collapsedMenuClass = 'collapsed-menu';
 
@@ -74,12 +71,6 @@ export class SidenavService {
     this.sidenav = sidenav;
   }
 
-  setSidenavStatus(sidenav: SidenavStatusData): void {
-    this.isOpen = sidenav.isOpen;
-    this.mode = sidenav.mode;
-    this.isCollapsed = sidenav.isCollapsed;
-  }
-
   toggleSecondaryMenu(menuInfo?: [string, SubMenuItem[]]): void {
     const [state, subItems] = menuInfo || [];
     if ((this.isOpenSecondaryMenu && !menuInfo) || (this.isOpenSecondaryMenu && state === this.menuName)) {
@@ -105,55 +96,17 @@ export class SidenavService {
         this.isMobile.set(isMobile);
         this.isOpen = !isMobile;
         this.mode = isMobile ? 'over' : 'side';
-        if (!isMobile) {
-          // TODO: This is hack to resolve issue described here: https://ixsystems.atlassian.net/browse/NAS-110404
-          setTimeout(() => {
-            this.sidenav?.open();
-          });
-          this.store$.pipe(
-            waitForPreferences,
-            take(1),
-            filter((preferences) => Boolean(preferences.sidenavStatus)),
-          ).subscribe(({ sidenavStatus }) => {
-            this.isMenuCollapsed = sidenavStatus.isCollapsed;
-            this.isCollapsed = sidenavStatus.isCollapsed;
-          });
-        } else {
-          this.isMenuCollapsed = false;
-          this.isOpen = false;
-        }
       });
   }
 
   private listenForSidenavIndicatorPressed(): void {
-    this.actions$
-      .pipe(
-        ofType(sidenavIndicatorPressed),
-        distinctUntilChanged(),
-      ).subscribe(() => {
-        this.toggleSidenav();
-      });
-  }
-
-  private toggleSidenav(): void {
-    if (this.isMobile()) {
-      this.sidenav?.toggle();
-    } else {
-      this.sidenav?.open();
-      this.isMenuCollapsed = !this.isMenuCollapsed;
-    }
-
-    const data: SidenavStatusData = {
-      isOpen: this.sidenav.opened,
-      mode: this.sidenav.mode,
-      isCollapsed: this.isMenuCollapsed,
-    };
-
-    if (!this.isMobile()) {
-      this.store$.dispatch(sidenavUpdated(data));
-    }
-
-    this.setSidenavStatus(data);
+    // this.actions$
+    //   .pipe(
+    //     ofType(sidenavIndicatorPressed),
+    //     distinctUntilChanged(),
+    //   ).subscribe(() => {
+    //     this.toggleSidenav();
+    //   });
   }
 
   private listenForRouteChanges(): void {

@@ -1,6 +1,7 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { iconMarker } from 'app/modules/ix-icon/icon-marker.util';
@@ -31,7 +32,7 @@ export class IxLogoComponent {
   );
 
   logoIcon$ = combineLatest([
-    this.themeService.activeTheme$,
+    toObservable(this.themeService.activeTheme),
     this.isXsScreen$,
   ]).pipe(
     map(([activeTheme, isXsScreen]) => {

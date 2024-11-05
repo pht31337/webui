@@ -19,7 +19,7 @@ import {
   updateRebootAfterManualUpdate,
 } from 'app/store/preferences/preferences.actions';
 import { selectPreferencesState } from 'app/store/preferences/preferences.selectors';
-import { sidenavUpdated } from 'app/store/topbar/topbar.actions';
+import { sidenavToggled } from 'app/store/topbar/topbar.actions';
 import {
   snapshotExtraColumnsToggled, dashboardStateLoaded, noPreferencesFound, noDashboardStateFound,
 } from './preferences.actions';
@@ -58,7 +58,7 @@ export class PreferencesEffects {
 
   saveUpdatedPreferences$ = createEffect(() => this.actions$.pipe(
     ofType(
-      sidenavUpdated,
+      sidenavToggled,
       themeNotFound,
       preferredColumnsUpdated,
       builtinUsersToggled,

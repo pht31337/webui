@@ -1,95 +1,32 @@
-<mat-sidenav-container class="app-side-nav-container">
-  <!-- Main side navigation -->
-  <mat-sidenav
-    class="sidebar-panel not-alerts"
-    [style.flex-basis]="sidenavWidth"
-    [opened]="isSidenavOpen"
-    [mode]="sidenavMode"
-    [disableClose]="sidenavMode !== 'over'"
-    (closedStart)="onMenuClosed()"
+<div class="container">
+  <a
+    ixTest="skip-to-content"
+    class="skip-to-content"
+    [tabindex]="0"
+    (click)="focusOnMain()"
+    (keydown.enter)="focusOnMain()"
   >
-    <div id="scroll-area" class="navigation-hold">
-      <div [ngClass]="['branding', 'topbar', 'truenas-' + (productType$ | async | lowercase)]">
-        <a routerLink="/dashboard" class="logo" ixTest="main-logo">
-          <ix-icon
-            class="app-logo"
-            [fullSize]="true"
-            [name]="isDefaultTheme ? 'ix-truenas-logo-mark-color': 'ix-truenas-logo-mark'"
-          ></ix-icon>
-        </a>
-        <a routerLink="/dashboard" class="logo-text" ixTest="main-logo">
-          <ix-icon
-            class="app-logo-text"
-            [fullSize]="true"
-            [name]="isDefaultTheme ? iconMarker('ix-truenas-logo-type-color'): iconMarker('ix-truenas-logo-type')"
-          ></ix-icon>
-        </a>
-      </div>
+    {{ 'Skip to Content' | translate }}
+  </a>
 
-      <ix-navigation
-        [isSidenavCollapsed]="isSidenavCollapsed"
-        (menuToggled)="toggleMenu($event)"
-        (menuClosed)="toggleMenu()"
-      ></ix-navigation>
+  <ix-main-sidebar></ix-main-sidebar>
 
-      <div class="slidein-nav slidein-nav-sm" [class.slidein-open]="isOpenSecondaryMenu">
-        <ix-secondary-menu
-          [subMenuItems]="subs"
-          [menuName]="menuName"
-          (toggleMenu)="toggleMenu()"
-        ></ix-secondary-menu>
-      </div>
-
-      @if (isSidenavCollapsed) {
-        <div
-          class="sidenav-copyright-icon"
-          matTooltipPosition="right"
-          [matTooltip]="'TrueNAS ' + (productType$ | async | mapValue: productTypeLabels) + '® © ' + copyrightYear() + ' by iXsystems, Inc.'"
-        >
-          <ix-icon name="copyright"></ix-icon>
-        </div>
-      } @else {
-        <div class="sidenav-copyright-txt">
-          @if (hostname$ | async; as hostname) {
-            <div
-              class="hostname-label"
-              [matTooltip]="'Hostname: {hostname}' | translate: { hostname }"
-            >{{ hostname }}</div>
-          }
-          <ix-copyright-line class="copyright-line"></ix-copyright-line>
-        </div>
-      }
-    </div>
-  </mat-sidenav>
-
-  <mat-sidenav-content
-    class="fn-maincontent"
-    [style.flex-basis]="'calc(100% - ' + sidenavWidth + ')'"
-    [style.margin-left]="sidenavWidth"
-  >
+  <div class="main-content">
     <ix-topbar></ix-topbar>
 
-    <div class="slidein-nav slidein-nav-md" [class.slidein-open]="isOpenSecondaryMenu">
-      <ix-secondary-menu
-        [subMenuItems]="subs"
-        [menuName]="menuName"
-        (toggleMenu)="toggleMenu()"
-      ></ix-secondary-menu>
-    </div>
-    <div class="overlay" [class.isdark]="isOpenSecondaryMenu" (click)="toggleMenu()"></div>
-
-    <!-- App content -->
+    <!-- Keep id here for Skip to Content link -->
     <main
-      class="rightside-content-hold"
-      [class.has-console-footer]="hasConsoleFooter$ | async"
-    >
+      #main
+      tabindex="-1"
+      [class.has-console-footer]="hasConsoleFooter$ | async">
       <ix-default-page-header></ix-default-page-header>
       <router-outlet></router-outlet>
     </main>
+
     @if (hasConsoleFooter$ | async) {
       <ix-console-footer></ix-console-footer>
     }
-  </mat-sidenav-content>
+  </div>
 
   <!-- Alert bar -->
   <mat-sidenav
@@ -100,7 +37,7 @@
   >
     <ix-alerts-panel></ix-alerts-panel>
   </mat-sidenav>
-</mat-sidenav-container>
+</div>
 
 <ix-slide-in id="ix-slide-in-form"></ix-slide-in>
 <ix-chained-slide-in id="ix-chained-slide-in-form"></ix-chained-slide-in>

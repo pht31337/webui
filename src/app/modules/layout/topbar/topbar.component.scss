@@ -1,9 +1,8 @@
 @import 'scss-imports/variables';
 
 :host {
-  position: fixed;
+  position: sticky;
   top: 0;
-  width: 100%;
   z-index: 5;
 
   .topbar-mobile-footer {
@@ -21,7 +20,7 @@
     @media (max-width: $breakpoint-tablet) {
       background-color: var(--topbar);
       bottom: 0;
-      height: $topbar-mobile-height;
+      height: $topbar-height;
       left: 0;
       padding: 0 16px;
       place-content: space-around;
@@ -78,7 +77,7 @@
   }
 
   .mobile-logo-container {
-    height: 48px;
+    height: $topbar-height;
     position: relative;
     width: 200px;
   }
@@ -101,10 +100,10 @@
 }
 
 :host ::ng-deep .topbar {
-  min-height: 48px;
+  min-height: $topbar-height;
 
   .mat-toolbar-row {
-    height: 48px !important;
+    height: $topbar-height !important;
   }
 
   .mat-icon-button,

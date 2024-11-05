@@ -1,0 +1,60 @@
+$highlighted-border: 6px;
+
+.menu-item {
+  border-radius: 0;
+  display: flex;
+  flex-direction: row;
+  padding: 0;
+
+  a {
+    align-items: center;
+    display: flex;
+    padding-left: $highlighted-border;
+    width: 100%;
+
+    &:focus-visible {
+      // TODO: Background is not implemented.
+      background-color: var(--focus-bg);
+      box-shadow: 0 0 0 1.5px var(--focus-bg) inset;
+      outline-width: 0;
+    }
+  }
+
+  &.highlighted {
+    border-left: $highlighted-border solid var(--primary);
+
+    a {
+      padding-left: 0;
+    }
+
+    .icon {
+      color: var(--primary);
+    }
+  }
+
+  &.collapsed {
+    border-left-width: 0;
+
+    a {
+      padding-left: 0;
+    }
+
+    // TODO: Weird text effect
+
+    .label,
+    .caret {
+      display: none;
+    }
+  }
+}
+
+.icon {
+  margin-left: 12px;
+  margin-right: 20px;
+  min-height: 48px;
+}
+
+.caret {
+  margin-left: auto;
+  margin-right: 13px;
+}
