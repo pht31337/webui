@@ -35,4 +35,9 @@ export class MainSidebarComponent {
   get isCollapsed(): boolean {
     return this.isSidebarCollapsed();
   }
+
+  @HostBinding('class.open-on-mobile')
+  get isOpenOnMobile(): boolean {
+    return this.sidebarService.isOpenOnMobile();
+  }
 }

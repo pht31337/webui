@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from 'app/store';
 import { sidenavToggled } from 'app/store/topbar/topbar.actions';
@@ -8,10 +8,13 @@ import { sidenavToggled } from 'app/store/topbar/topbar.actions';
   providedIn: 'root',
 })
 export class MainSidebarService {
-  readonly isCollapsed = signal(false);
   readonly isOpenOnMobile = signal(false);
+  readonly isCollapsed = computed(() => {
+    return this.isCollapsedOnDesktop() && !this.isSmScreen();
+  });
 
-  private readonly isXsScreen = signal(false);
+  private readonly isSmScreen = signal(false);
+  private readonly isCollapsedOnDesktop = signal(false);
 
   constructor(
     private store$: Store<AppState>,
@@ -21,22 +24,24 @@ export class MainSidebarService {
   }
 
   onTogglePressed(): void {
-    if (this.isXsScreen()) {
+    if (this.isSmScreen()) {
       this.isOpenOnMobile.set(!this.isOpenOnMobile());
       return;
     }
 
-    this.isCollapsed.set(!this.isCollapsed());
+    this.isCollapsedOnDesktop.set(!this.isCollapsedOnDesktop());
+
+    // TODO: Nuke store for this.
     this.store$.dispatch(sidenavToggled({
-      isCollapsed: this.isCollapsed(),
+      isCollapsed: this.isCollapsedOnDesktop(),
     }));
   }
 
   private listenToScreenSizeChanges(): void {
-    this.breakpointObserver.observe(Breakpoints.XSmall).subscribe((breakpoints) => {
-      const isXsScreen = breakpoints.matches;
+    this.breakpointObserver.observe(Breakpoints.Small).subscribe((breakpoints) => {
+      const isSmScreen = breakpoints.matches;
 
-      this.isXsScreen.set(isXsScreen);
+      this.isSmScreen.set(isSmScreen);
       this.isOpenOnMobile.set(false);
     });
   }

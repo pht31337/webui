@@ -1,4 +1,4 @@
-<mat-list role="list">
+<mat-list role="list" class="menu">
   @for (subItem of subMenuItems(); track subItem) {
     @if (!subItem.isVisible$ || (subItem.isVisible$ | async)) {
       <mat-list-item

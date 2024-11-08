@@ -1,0 +1,31 @@
+@import 'scss-imports/variables';
+
+:host {
+  background-color: var(--contrast-darker);
+  bottom: 0;
+  left: $sidebar-width;
+  position: fixed;
+  top: $topbar-height;
+  width: 240px;
+  z-index: 1000;
+
+  @media #{$media-lt-md} {
+    left: 0;
+  }
+}
+
+.menu {
+  padding: 0;
+
+  .menu-item {
+    padding: 0;
+  }
+}
+
+a {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
+  height: 48px;
+  padding: 0 16px;
+}

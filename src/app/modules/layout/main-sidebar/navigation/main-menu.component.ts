@@ -1,5 +1,3 @@
-import { Overlay } from '@angular/cdk/overlay';
-import { ComponentPortal } from '@angular/cdk/portal';
 import { AsyncPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy, Component, input, signal,
@@ -38,24 +36,12 @@ export class MainMenuComponent {
 
   constructor(
     private navService: NavigationService,
-    private overlay: Overlay,
   ) {}
 
   protected onItemClicked(item: MenuItem): void {
     if (item.type !== MenuItemType.SlideOut) {
       return;
     }
-
-    const overlay = this.overlay.create({
-      hasBackdrop: true,
-      width: '300px',
-      height: '100%',
-    });
-
-    const userProfilePortal = new ComponentPortal(SecondaryMenuComponent);
-    overlay.attach(userProfilePortal);
-
-    return;
 
     if (this.secondaryMenuOpenedFor() === item) {
       this.secondaryMenuOpenedFor.set(null);

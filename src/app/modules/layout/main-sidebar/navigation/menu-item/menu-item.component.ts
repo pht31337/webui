@@ -5,7 +5,6 @@ import { MatListItem } from '@angular/material/list';
 import { MatTooltip } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { right } from '@popperjs/core';
 import { MenuItem, MenuItemType } from 'app/interfaces/menu-item.interface';
 import { IxIconComponent } from 'app/modules/ix-icon/ix-icon.component';
 import { TestDirective } from 'app/modules/test-id/test.directive';
@@ -33,7 +32,10 @@ export class MenuItemComponent {
   protected readonly hasSubmenu = computed(() => this.item().type === MenuItemType.SlideOut);
 
   protected readonly routerLink = computed(() => {
+    if (!this.item().state) {
+      return null;
+    }
+
     return ['/', ...this.item().state.split('/')];
   });
-  protected readonly right = right;
 }

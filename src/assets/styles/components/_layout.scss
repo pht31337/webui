@@ -1,0 +1,6 @@
+@import 'scss-imports/variables';
+
+div.main-menu-backdrop {
+  left: $sidebar-width;
+  top: $topbar-height;
+}

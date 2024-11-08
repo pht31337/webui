@@ -10,13 +10,13 @@
         [collapsed]="collapsed()"
         (click)="onItemClicked(item)"
       ></ix-menu-item>
-
-      @if (item === secondaryMenuOpenedFor()) {
-        <ix-secondary-menu
-          [menuName]="secondaryMenuOpenedFor().name"
-          [subMenuItems]="secondaryMenuOpenedFor().sub"
-        ></ix-secondary-menu>
-      }
     }
   }
 </mat-nav-list>
+
+@if (secondaryMenuOpenedFor()) {
+  <ix-secondary-menu
+    [menuName]="secondaryMenuOpenedFor().name"
+    [subMenuItems]="secondaryMenuOpenedFor().sub"
+  ></ix-secondary-menu>
+}
