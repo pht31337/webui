@@ -110,7 +110,7 @@ def enter_the_user_name_click_next_and_enter_the_password_click_next(driver, use
     assert wait_on_element(driver, 5, '//button[contains(text(),"Next")]', 'clickable')
     driver.find_element_by_xpath('//button[contains(text(),"Next")]').click()
     time.sleep(1)
-    assert wait_on_element(driver, 10, f'//p[@class="user-email" and contains(text(),"{user_name}")]')
+    assert wait_on_element(driver, 10, f'//input[@value="{user_name}"]')
     assert wait_on_element(driver, 5, '//input[@name="password-field"]', 'inputable')
     driver.find_element_by_xpath('//input[@name="password-field"]').send_keys(password)
     time.sleep(1)
@@ -124,13 +124,13 @@ def click_on_browser_files_click_on_bucket_then_click_on_the_test_folder(driver,
     """click on Browser Files, click on {bucket}, then click on the bucket."""
     global my_bucket
     my_bucket = bucket
-    assert wait_on_element(driver, 10, '//span[text()="B2 Cloud Storage Buckets"]')
+    assert wait_on_element(driver, 10, '//h1[contains(text(),"B2 Cloud Storage Buckets")]')
     assert wait_on_element(driver, 7, '//a[text()="Browse Files"]', 'clickable')
     driver.find_element_by_xpath('//a[text()="Browse Files"]').click()
     assert wait_on_element(driver, 10, '//h1[text()="Browse Files"]')
     assert wait_on_element(driver, 10, '//div[@class="b2-browse-crumbs" and contains(.,"Buckets")]')
-    assert wait_on_element(driver, 10, f'//span[contains(text(),"{bucket} ")]', 'clickable')
-    driver.find_element_by_xpath(f'//span[contains(text(),"{bucket} ")]').click()
+    assert wait_on_element(driver, 10, f'//*[contains(text(),"{bucket} ")]', 'clickable')
+    driver.find_element_by_xpath(f'//*[contains(text(),"{bucket} ")]').click()
     assert wait_on_element(driver, 10, f'//a[text()="{bucket}"]', 'clickable')
     time.sleep(1)
 
