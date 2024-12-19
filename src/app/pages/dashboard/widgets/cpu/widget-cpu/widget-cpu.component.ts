@@ -11,14 +11,13 @@ import { Store } from '@ngrx/store';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { map } from 'rxjs/operators';
-import { AllCpusUpdate } from 'app/interfaces/reporting.interface';
+import { CpuUpdate } from 'app/interfaces/reporting.interface';
 import { GaugeData } from 'app/modules/charts/view-chart-gauge/view-chart-gauge.component';
 import { IxIconComponent } from 'app/modules/ix-icon/ix-icon.component';
 import { TestDirective } from 'app/modules/test-id/test.directive';
 import { WidgetResourcesService } from 'app/pages/dashboard/services/widget-resources.service';
 import { SlotSize } from 'app/pages/dashboard/types/widget.interface';
 import { CpuChartGaugeComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-chart-gauge/cpu-chart-gauge.component';
-import { CpuCoreBarComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-core-bar/cpu-core-bar.component';
 import { CpuParams } from 'app/pages/dashboard/widgets/cpu/interfaces/cpu-params.interface';
 import { cpuWidget } from 'app/pages/dashboard/widgets/cpu/widget-cpu/widget-cpu.definition';
 import { AppState } from 'app/store';
@@ -42,7 +41,6 @@ import { waitForSystemInfo } from 'app/store/system-info/system-info.selectors';
     MatList,
     MatListItem,
     NgxSkeletonLoaderModule,
-    CpuCoreBarComponent,
     TranslateModule,
   ],
 })
@@ -108,13 +106,11 @@ export class WidgetCpuComponent {
     private translate: TranslateService,
   ) {}
 
-  protected parseCpuData(cpuData: AllCpusUpdate): GaugeData[] {
+  protected parseCpuData(cpuData: CpuUpdate): GaugeData[] {
     const usageColumn: GaugeData = ['Usage'];
     const temperatureColumn: GaugeData = ['Temperature'];
 
-    for (let i = 0; i < this.threadCount(); i++) {
-      usageColumn.push(parseInt(cpuData[i].usage.toFixed(1)));
-    }
+    usageColumn.push(parseInt(cpuData.usage.toFixed(1)));
 
     if (cpuData.temperature_celsius) {
       for (let i = 0; i < this.coreCount(); i++) {

@@ -6,7 +6,7 @@ import { WidgetComponent } from 'app/pages/dashboard/types/widget-component.inte
 import {
   SlotSize,
 } from 'app/pages/dashboard/types/widget.interface';
-import { CpuCoreBarComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-core-bar/cpu-core-bar.component';
+import { CpuCoreTemperatureBarComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-core-temperature-bar/cpu-core-temperature-bar.component';
 import { cpuTemperatureBarWidget } from 'app/pages/dashboard/widgets/cpu/widget-cpu-temperature-bar/widget-cpu-temperature-bar.definition';
 
 @Component({
@@ -15,7 +15,7 @@ import { cpuTemperatureBarWidget } from 'app/pages/dashboard/widgets/cpu/widget-
   styleUrls: ['./widget-cpu-temperature-bar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CpuCoreBarComponent, TranslateModule],
+  imports: [CpuCoreTemperatureBarComponent, TranslateModule],
 })
 export class WidgetCpuTemperatureBarComponent implements WidgetComponent {
   size = input.required<SlotSize>();

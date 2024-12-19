@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { WidgetResourcesService } from 'app/pages/dashboard/services/widget-resources.service';
 import { SlotSize } from 'app/pages/dashboard/types/widget.interface';
 import { CpuChartGaugeComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-chart-gauge/cpu-chart-gauge.component';
-import { CpuCoreBarComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-core-bar/cpu-core-bar.component';
+import { CpuCoreTemperatureBarComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-core-temperature-bar/cpu-core-temperature-bar.component';
 import { WidgetCpuComponent } from 'app/pages/dashboard/widgets/cpu/widget-cpu/widget-cpu.component';
 import { selectSystemInfo } from 'app/store/system-info/system-info.selectors';
 
@@ -19,7 +19,7 @@ describe('WidgetCpuComponent', () => {
     ],
     declarations: [
       MockComponent(CpuChartGaugeComponent),
-      MockComponent(CpuCoreBarComponent),
+      MockComponent(CpuCoreTemperatureBarComponent),
     ],
     providers: [
       mockProvider(

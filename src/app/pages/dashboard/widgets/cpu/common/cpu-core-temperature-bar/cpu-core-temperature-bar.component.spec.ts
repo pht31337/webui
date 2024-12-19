@@ -6,14 +6,14 @@ import { BaseChartDirective } from 'ng2-charts';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { of } from 'rxjs';
 import { WidgetResourcesService } from 'app/pages/dashboard/services/widget-resources.service';
-import { CpuCoreBarComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-core-bar/cpu-core-bar.component';
+import { CpuCoreTemperatureBarComponent } from 'app/pages/dashboard/widgets/cpu/common/cpu-core-temperature-bar/cpu-core-temperature-bar.component';
 import { ThemeService } from 'app/services/theme/theme.service';
 import { selectSystemInfo } from 'app/store/system-info/system-info.selectors';
 
 describe('CpuCoreBarComponent', () => {
-  let spectator: Spectator<CpuCoreBarComponent>;
+  let spectator: Spectator<CpuCoreTemperatureBarComponent>;
   const createComponent = createComponentFactory({
-    component: CpuCoreBarComponent,
+    component: CpuCoreTemperatureBarComponent,
     imports: [
       NgxSkeletonLoaderModule,
     ],

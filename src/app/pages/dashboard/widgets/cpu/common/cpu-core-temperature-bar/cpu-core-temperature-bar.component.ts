@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy, Component,
   computed,
-  input,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TinyColor } from '@ctrl/tinycolor';
@@ -10,7 +9,7 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { map } from 'rxjs';
-import { AllCpusUpdate } from 'app/interfaces/reporting.interface';
+import { CpuUpdate } from 'app/interfaces/reporting.interface';
 import { GaugeData } from 'app/modules/charts/view-chart-gauge/view-chart-gauge.component';
 import { WidgetResourcesService } from 'app/pages/dashboard/services/widget-resources.service';
 import { ThemeService } from 'app/services/theme/theme.service';
@@ -18,16 +17,13 @@ import { AppState } from 'app/store';
 import { waitForSystemInfo } from 'app/store/system-info/system-info.selectors';
 
 @Component({
-  selector: 'ix-cpu-core-bar',
-  templateUrl: './cpu-core-bar.component.html',
+  selector: 'ix-cpu-core-temperature-bar',
+  templateUrl: './cpu-core-temperature-bar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [NgxSkeletonLoaderModule, BaseChartDirective],
 })
-export class CpuCoreBarComponent {
-  hideTemperature = input<boolean>(false);
-  hideUsage = input<boolean>(false);
-
+export class CpuCoreTemperatureBarComponent {
   protected sysInfo = toSignal(this.store$.pipe(waitForSystemInfo));
 
   protected cpuData = toSignal(this.resources.realtimeUpdates$.pipe(
@@ -114,27 +110,17 @@ export class CpuCoreBarComponent {
     private theme: ThemeService,
   ) {}
 
-  protected parseCpuData(cpuData: AllCpusUpdate): GaugeData[] {
-    const usageColumn: GaugeData = ['Usage'];
+  protected parseCpuData(cpuData: CpuUpdate): GaugeData[] {
     const temperatureColumn: GaugeData = ['Temperature'];
 
     for (let i = 0; i < this.coreCount(); i++) {
-      const usageIndex = this.hyperthread() ? i * 2 : i;
-
-      const usageCore = this.hyperthread()
-        ? (cpuData[usageIndex].usage + cpuData[usageIndex + 1].usage).toFixed(1)
-        : cpuData[usageIndex].usage.toFixed(1);
-
-      usageColumn.push(parseInt(usageCore));
-
       if (cpuData.temperature_celsius) {
         temperatureColumn.push(parseInt(cpuData.temperature_celsius[i].toFixed(0)));
       }
     }
 
     return [
-      this.hideUsage() ? [] : usageColumn,
-      this.hideTemperature() ? [] : temperatureColumn,
+      temperatureColumn,
     ];
   }
 }

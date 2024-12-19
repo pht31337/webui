@@ -16,6 +16,5 @@ describe('getDefaultWidgets', () => {
 
     expect(result).toHaveLength(8);
     expect(result[0].slots[0].type).toBe(WidgetType.SystemInfoActive);
-    expect(result[1].slots[0].type).toBe(WidgetType.CpuUsageBar);
   });
 });

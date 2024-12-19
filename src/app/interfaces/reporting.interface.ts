@@ -3,18 +3,12 @@ import { ReportingQueryUnit } from 'app/enums/reporting.enum';
 import { ApiError } from 'app/interfaces/api-error.interface';
 
 export interface ReportingRealtimeUpdate {
-  cpu: AllCpusUpdate;
+  cpu: CpuUpdate;
   disks: DisksUpdate;
   interfaces: AllNetworkInterfacesUpdate;
   memory: MemoryUpdate;
   virtual_memory: VirtualMemoryUpdate;
   zfs: ZfsUpdate;
-}
-
-export interface AllCpusUpdate {
-  [cpuNumber: number]: CpuUpdate;
-  average: CpuUpdate;
-  temperature_celsius: number[];
 }
 
 export interface CpuUpdate {
@@ -29,6 +23,7 @@ export interface CpuUpdate {
   system: number;
   usage: number;
   user: number;
+  temperature_celsius: number[] | null;
 }
 
 export interface DisksUpdate {

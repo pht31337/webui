@@ -8,7 +8,6 @@ import { backupTasksWidget } from 'app/pages/dashboard/widgets/backup/widget-bac
 import { cpuWidget } from 'app/pages/dashboard/widgets/cpu/widget-cpu/widget-cpu.definition';
 import { cpuModelWidget } from 'app/pages/dashboard/widgets/cpu/widget-cpu-model/widget-cpu-model.definition';
 import { cpuTemperatureBarWidget } from 'app/pages/dashboard/widgets/cpu/widget-cpu-temperature-bar/widget-cpu-temperature-bar.definition';
-import { cpuUsageBarWidget } from 'app/pages/dashboard/widgets/cpu/widget-cpu-usage-bar/widget-cpu-usage-bar.definition';
 import { cpuUsageGaugeWidget } from 'app/pages/dashboard/widgets/cpu/widget-cpu-usage-gauge/widget-cpu-usage-gauge.definition';
 import { cpuUsageRecentWidget } from 'app/pages/dashboard/widgets/cpu/widget-cpu-usage-recent/widget-cpu-usage-recent.definition';
 import { arbitraryTextWidget } from 'app/pages/dashboard/widgets/custom/arbitrary-text/widget-arbitrary-text.definition';
@@ -58,7 +57,6 @@ export const widgetRegistry = {
   [WidgetType.Cpu]: cpuWidget,
   [WidgetType.CpuUsageGauge]: cpuUsageGaugeWidget,
   [WidgetType.CpuUsageRecent]: cpuUsageRecentWidget,
-  [WidgetType.CpuUsageBar]: cpuUsageBarWidget,
   [WidgetType.CpuTemperatureBar]: cpuTemperatureBarWidget,
   [WidgetType.Storage]: storageWidget,
   [WidgetType.SystemInfoActive]: systemInfoActiveWidget,
