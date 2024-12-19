@@ -298,7 +298,15 @@ export type AppDeleteParams = [
   {
     remove_images?: boolean;
     remove_ix_volumes?: boolean;
+    force_remove_ix_volumes?: boolean;
   },
 ];
 
 export type AppRollbackParams = [app_name: string, { app_version: string; rollback_snapshot: boolean }];
+
+export interface AppContainerLog {
+  data: string;
+  timestamp: string;
+  msg?: string;
+  collection?: string;
+}

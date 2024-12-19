@@ -64,8 +64,6 @@ export class IxCellStateButtonComponent<T> extends ColumnComponent<T> implements
     }
 
     this.state.set(job.state);
-  }, {
-    allowSignalWrites: true,
   });
 
   getJob: (row: T) => Job;
@@ -160,7 +158,7 @@ export class IxCellStateButtonComponent<T> extends ColumnComponent<T> implements
         canMinimize: true,
       },
     ).afterClosed().pipe(
-      catchError((error) => {
+      catchError((error: unknown) => {
         this.errorHandler.showErrorModal(error);
         return EMPTY;
       }),

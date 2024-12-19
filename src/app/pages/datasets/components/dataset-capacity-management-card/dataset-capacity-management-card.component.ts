@@ -1,5 +1,5 @@
 import {
-  Component, ChangeDetectionStrategy, ChangeDetectorRef, Input, OnChanges, OnInit,
+  Component, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, OnInit, input, computed,
 } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import {
@@ -55,7 +55,7 @@ import { ApiService } from 'app/services/websocket/api.service';
   ],
 })
 export class DatasetCapacityManagementCardComponent implements OnChanges, OnInit {
-  @Input() dataset: DatasetDetails;
+  readonly dataset = input.required<DatasetDetails>();
 
   protected readonly requiredRoles = [Role.DatasetWrite];
   protected readonly searchableElements = datasetCapacityManagementElements;
@@ -66,29 +66,29 @@ export class DatasetCapacityManagementCardComponent implements OnChanges, OnInit
   userQuotas: number;
   groupQuotas: number;
 
-  get isFilesystem(): boolean {
-    return this.dataset.type === DatasetType.Filesystem;
-  }
+  protected isFilesystem = computed(() => {
+    return this.dataset().type === DatasetType.Filesystem;
+  });
 
-  get isZvol(): boolean {
-    return this.dataset.type === DatasetType.Volume;
-  }
+  protected isZvol = computed(() => {
+    return this.dataset().type === DatasetType.Volume;
+  });
 
-  get checkQuotas(): boolean {
-    return !this.dataset.locked && this.isFilesystem && !this.dataset.readonly;
-  }
+  protected checkQuotas = computed(() => {
+    return !this.dataset().locked && this.isFilesystem() && !this.dataset().readonly;
+  });
 
-  get hasQuota(): boolean {
-    return Boolean(this.dataset?.quota?.parsed);
-  }
+  protected hasQuota = computed(() => {
+    return Boolean(this.dataset()?.quota?.parsed);
+  });
 
-  get hasRefQuota(): boolean {
-    return Boolean(this.dataset?.refquota?.parsed);
-  }
+  protected hasRefQuota = computed(() => {
+    return Boolean(this.dataset()?.refquota?.parsed);
+  });
 
-  get hasInheritedQuotas(): boolean {
-    return this.inheritedQuotasDataset?.quota?.parsed && this.inheritedQuotasDataset?.id !== this.dataset?.id;
-  }
+  protected hasInheritedQuotas = computed(() => {
+    return this.inheritedQuotasDataset?.quota?.parsed && this.inheritedQuotasDataset?.id !== this.dataset()?.id;
+  });
 
   constructor(
     private api: ApiService,
@@ -102,13 +102,13 @@ export class DatasetCapacityManagementCardComponent implements OnChanges, OnInit
   ngOnChanges(changes: IxSimpleChanges<this>): void {
     this.getInheritedQuotas();
     const selectedDatasetHasChanged = changes?.dataset?.previousValue?.id !== changes?.dataset?.currentValue?.id;
-    if (selectedDatasetHasChanged && this.checkQuotas) {
+    if (selectedDatasetHasChanged && this.checkQuotas()) {
       this.refreshQuotas$.next();
     }
   }
 
   ngOnInit(): void {
-    if (this.checkQuotas) {
+    if (this.checkQuotas()) {
       this.initQuotas();
       this.refreshQuotas$.next();
     }
@@ -121,8 +121,8 @@ export class DatasetCapacityManagementCardComponent implements OnChanges, OnInit
         this.cdr.markForCheck();
       }),
       switchMap(() => forkJoin([
-        this.api.call('pool.dataset.get_quota', [this.dataset.id, DatasetQuotaType.User, []]),
-        this.api.call('pool.dataset.get_quota', [this.dataset.id, DatasetQuotaType.Group, []]),
+        this.api.call('pool.dataset.get_quota', [this.dataset().id, DatasetQuotaType.User, []]),
+        this.api.call('pool.dataset.get_quota', [this.dataset().id, DatasetQuotaType.Group, []]),
       ])),
       untilDestroyed(this),
     ).subscribe({
@@ -161,7 +161,7 @@ export class DatasetCapacityManagementCardComponent implements OnChanges, OnInit
 
   editDataset(): void {
     this.slideInService
-      .open(DatasetCapacitySettingsComponent, { wide: true, data: this.dataset })
+      .open(DatasetCapacitySettingsComponent, { wide: true, data: this.dataset() })
       .slideInClosed$
       .pipe(untilDestroyed(this))
       .subscribe(() => {

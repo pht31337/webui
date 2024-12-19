@@ -1,6 +1,5 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import {
-  ChangeDetectionStrategy, Component, ElementRef, ViewChild,
+  ChangeDetectionStrategy, Component,
 } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import {
@@ -36,12 +35,6 @@ import { ApiService } from 'app/services/websocket/api.service';
   ],
 })
 export class ErrorDialogComponent {
-  @ViewChild('errorMessageWrapper') errorMessageWrapper: ElementRef;
-  @ViewChild('errorTitle') errorTitle: ElementRef;
-  @ViewChild('errorMdContent') errorMdContent: ElementRef;
-  @ViewChild('errorBtPanel') errorBtPanel: ElementRef;
-  @ViewChild('errorBtText') errorBtText: ElementRef;
-
   title: string;
   message: string;
   backtrace: string;
@@ -71,15 +64,15 @@ export class ErrorDialogComponent {
               this.dialogRef.close();
             }
           },
-          error: (err: HttpErrorResponse) => {
+          error: (err: unknown) => {
             if (this.dialogRef) {
               this.dialogRef.close();
             }
-            this.dialogService.error(this.errorHandler.parseHttpError(err));
+            this.dialogService.error(this.errorHandler.parseError(err));
           },
         });
       },
-      error: (err) => {
+      error: (err: unknown) => {
         this.dialogService.error(this.errorHandler.parseError(err));
       },
     });

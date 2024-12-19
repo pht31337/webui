@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, Input, OnChanges,
+  ChangeDetectionStrategy, Component, computed, input, OnChanges,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { UntilDestroy } from '@ngneat/until-destroy';
@@ -38,8 +38,8 @@ import { IxFormatterService } from 'app/modules/forms/ix-forms/services/ix-forma
   ],
 })
 export class TransportSectionComponent implements OnChanges {
-  @Input() replication: ReplicationTask;
-  @Input() transport: TransportMode;
+  readonly replication = input<ReplicationTask>();
+  readonly transport = input<TransportMode>();
 
   form = this.formBuilder.group({
     ssh_credentials: [null as number | typeof newOption],
@@ -68,28 +68,28 @@ export class TransportSectionComponent implements OnChanges {
   ) { }
 
   ngOnChanges(): void {
-    if (this.replication) {
-      this.setFormValues(this.replication);
+    if (this.replication()) {
+      this.setFormValues(this.replication());
     }
 
-    if (this.isLocal) {
+    if (this.isLocal()) {
       this.form.controls.ssh_credentials.disable();
     } else {
       this.form.controls.ssh_credentials.enable();
     }
   }
 
-  get isLocal(): boolean {
-    return this.transport === TransportMode.Local;
-  }
+  protected isLocal = computed(() => {
+    return this.transport() === TransportMode.Local;
+  });
 
-  get isNetcat(): boolean {
-    return this.transport === TransportMode.Netcat;
-  }
+  protected isNetcat = computed(() => {
+    return this.transport() === TransportMode.Netcat;
+  });
 
-  get isSsh(): boolean {
-    return this.transport === TransportMode.Ssh;
-  }
+  protected isSsh = computed(() => {
+    return this.transport() === TransportMode.Ssh;
+  });
 
   setFormValues(replication: ReplicationTask): void {
     this.form.patchValue({
@@ -108,7 +108,7 @@ export class TransportSectionComponent implements OnChanges {
   getPayload(): Partial<ReplicationCreate> {
     const values = this.form.getRawValue();
 
-    if (this.isLocal) {
+    if (this.isLocal()) {
       return {
         large_block: values.large_block,
         compressed: values.compressed,
@@ -121,7 +121,7 @@ export class TransportSectionComponent implements OnChanges {
       };
     }
 
-    if (this.isSsh) {
+    if (this.isSsh()) {
       return {
         ...omitBy({
           ssh_credentials: values.ssh_credentials,

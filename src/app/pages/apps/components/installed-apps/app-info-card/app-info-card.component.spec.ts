@@ -3,21 +3,16 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { EventEmitter } from '@angular/core';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatMenuHarness } from '@angular/material/menu/testing';
 import { Router } from '@angular/router';
 import { Spectator } from '@ngneat/spectator';
 import { createComponentFactory, mockProvider } from '@ngneat/spectator/jest';
-import { MockComponents, MockDirective } from 'ng-mocks';
-import { ImgFallbackDirective, ImgFallbackModule } from 'ngx-img-fallback';
-import { NgxSkeletonLoaderComponent } from 'ngx-skeleton-loader';
 import { of } from 'rxjs';
 import { mockApi, mockJob, mockCall } from 'app/core/testing/utils/mock-api.utils';
 import { mockAuth } from 'app/core/testing/utils/mock-auth.utils';
 import { App } from 'app/interfaces/app.interface';
 import { AppUpgradeSummary } from 'app/interfaces/application.interface';
 import { DialogService } from 'app/modules/dialog/dialog.service';
-import { CleanLinkPipe } from 'app/modules/pipes/clean-link/clean-link.pipe';
-import { OrNotAvailablePipe } from 'app/modules/pipes/or-not-available/or-not-available.pipe';
-import { AppCardLogoComponent } from 'app/pages/apps/components/app-card-logo/app-card-logo.component';
 import { AppDeleteDialogComponent } from 'app/pages/apps/components/app-delete-dialog/app-delete-dialog.component';
 import { CustomAppFormComponent } from 'app/pages/apps/components/custom-app-form/custom-app-form.component';
 import { AppInfoCardComponent } from 'app/pages/apps/components/installed-apps/app-info-card/app-info-card.component';
@@ -25,7 +20,6 @@ import { AppRollbackModalComponent } from 'app/pages/apps/components/installed-a
 import { AppUpgradeDialogComponent } from 'app/pages/apps/components/installed-apps/app-upgrade-dialog/app-upgrade-dialog.component';
 import { ApplicationsService } from 'app/pages/apps/services/applications.service';
 import { InstalledAppsStore } from 'app/pages/apps/store/installed-apps-store.service';
-import { AppVersionPipe } from 'app/pages/dashboard/widgets/apps/common/utils/app-version.pipe';
 import { RedirectService } from 'app/services/redirect.service';
 import { SlideInService } from 'app/services/slide-in.service';
 import { ApiService } from 'app/services/websocket/api.service';
@@ -72,19 +66,6 @@ describe('AppInfoCardComponent', () => {
 
   const createComponent = createComponentFactory({
     component: AppInfoCardComponent,
-    imports: [
-      CleanLinkPipe,
-      OrNotAvailablePipe,
-      AppVersionPipe,
-      ImgFallbackModule,
-    ],
-    declarations: [
-      MockComponents(
-        AppCardLogoComponent,
-        NgxSkeletonLoaderComponent,
-      ),
-      MockDirective(ImgFallbackDirective),
-    ],
     providers: [
       mockProvider(ApplicationsService, {
         getAppUpgradeSummary: jest.fn(() => of(upgradeSummary)),
@@ -94,6 +75,7 @@ describe('AppInfoCardComponent', () => {
         installedApps$: of([]),
       }),
       mockProvider(DialogService, {
+        confirm: jest.fn(() => of(true)),
         jobDialog: jest.fn(() => ({
           afterClosed: () => of(null),
         })),
@@ -104,6 +86,7 @@ describe('AppInfoCardComponent', () => {
       mockProvider(RedirectService),
       mockAuth(),
       mockApi([
+        mockJob('app.convert_to_custom'),
         mockJob('app.upgrade'),
         mockJob('app.delete'),
         mockCall('app.rollback_versions', ['1.2.1']),
@@ -157,19 +140,26 @@ describe('AppInfoCardComponent', () => {
     ]);
   });
 
-  it('shows header', () => {
+  it('shows header', async () => {
     setupTest(fakeApp);
     spectator.detectChanges();
     expect(spectator.query('mat-card-header h3')).toHaveText('Application Info');
     expect(spectator.query('mat-card-header button#edit-app')).toHaveText('Edit');
-    expect(spectator.query('mat-card-header button#update-app')).toHaveText('Update');
+
+    const menu = await loader.getHarness(MatMenuHarness.with({ selector: '[ixTest="app-info-menu"]' }));
+    await menu.open();
+
+    const menuItems = await menu.getItems();
+    expect(menuItems).toHaveLength(2);
+    expect(await menuItems[0].getText()).toContain('Update');
+    expect(await menuItems[1].getText()).toContain('Convert to custom app');
   });
 
   it('opens upgrade app dialog when Update button is pressed', async () => {
     setupTest(fakeApp);
 
-    const updateButton = await loader.getHarness(MatButtonHarness.with({ text: 'Update' }));
-    await updateButton.click();
+    const menu = await loader.getHarness(MatMenuHarness.with({ selector: '[ixTest="app-info-menu"]' }));
+    await menu.clickItem({ text: 'Update' });
 
     expect(spectator.inject(MatDialog).open).toHaveBeenCalledWith(AppUpgradeDialogComponent, {
       maxWidth: '750px',
@@ -180,6 +170,16 @@ describe('AppInfoCardComponent', () => {
         upgradeSummary,
       },
     });
+  });
+
+  it('converts app to custom when Convert button is pressed', async () => {
+    setupTest(fakeApp);
+
+    const menu = await loader.getHarness(MatMenuHarness.with({ selector: '[ixTest="app-info-menu"]' }));
+    await menu.clickItem({ text: 'Convert to custom app' });
+
+    expect(spectator.inject(DialogService).jobDialog).toHaveBeenCalled();
+    expect(spectator.inject(ApiService).job).toHaveBeenLastCalledWith('app.convert_to_custom', ['test-user-app-name']);
   });
 
   it('navigates to app edit page when Edit button is pressed', async () => {

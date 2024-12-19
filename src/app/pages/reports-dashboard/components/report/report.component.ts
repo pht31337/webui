@@ -1,10 +1,13 @@
 import { DOCUMENT, KeyValuePipe } from '@angular/common';
 import {
   Component,
-  Input,
-  ViewChild,
   OnChanges,
-  OnInit, Inject, ChangeDetectionStrategy, ChangeDetectorRef,
+  OnInit,
+  Inject,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  input,
+  viewChild,
 } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardTitle, MatCardContent } from '@angular/material/card';
@@ -29,7 +32,7 @@ import { oneDayMillis, oneHourMillis } from 'app/constants/time.constant';
 import { toggleMenuDuration } from 'app/constants/toggle-menu-duration';
 import { EmptyType } from 'app/enums/empty-type.enum';
 import { ReportingGraphName } from 'app/enums/reporting.enum';
-import { ApiError } from 'app/interfaces/api-error.interface';
+import { extractApiError } from 'app/helpers/api.helper';
 import { ReportingData, ReportingDatabaseError } from 'app/interfaces/reporting.interface';
 import { IxSimpleChanges } from 'app/interfaces/simple-changes.interface';
 import { FormatDateTimePipe } from 'app/modules/dates/pipes/format-date-time/format-datetime.pipe';
@@ -42,7 +45,7 @@ import { LineChartComponent } from 'app/pages/reports-dashboard/components/line-
 import { ReportStepDirection } from 'app/pages/reports-dashboard/enums/report-step-direction.enum';
 import { ReportZoomLevel, zoomLevelLabels } from 'app/pages/reports-dashboard/enums/report-zoom-level.enum';
 import {
-  DateTime, LegendDataWithStackedTotalHtml, Report, FetchReportParams, TimeAxisData, TimeData,
+  LegendDataWithStackedTotalHtml, Report, FetchReportParams, TimeAxisData, TimeData,
 } from 'app/pages/reports-dashboard/interfaces/report.interface';
 import { refreshInterval } from 'app/pages/reports-dashboard/reports.constants';
 import { ReportsService } from 'app/pages/reports-dashboard/reports.service';
@@ -81,11 +84,11 @@ import { selectTimezone } from 'app/store/system-config/system-config.selectors'
   ],
 })
 export class ReportComponent implements OnInit, OnChanges {
-  @Input() localControls?: boolean = true;
-  @Input() dateFormat?: DateTime;
-  @Input() report: Report;
-  @Input() identifier?: string;
-  @ViewChild(LineChartComponent, { static: false }) lineChart: LineChartComponent;
+  readonly localControls = input(true);
+  readonly report = input.required<Report>();
+  readonly identifier = input<string>();
+
+  private readonly lineChart = viewChild(LineChartComponent);
 
   updateReport$ = new BehaviorSubject<IxSimpleChanges<this>>(null);
   fetchReport$ = new BehaviorSubject<FetchReportParams>(null);
@@ -126,8 +129,8 @@ export class ReportComponent implements OnInit, OnChanges {
   readonly zoomLevelLabels = zoomLevelLabels;
 
   get reportTitle(): string {
-    const trimmed = this.report.title.replace(/[()]/g, '');
-    return this.identifier ? trimmed.replace(/{identifier}/, this.identifier) : this.report.title;
+    const trimmed = this.report().title.replace(/[()]/g, '');
+    return this.identifier() ? trimmed.replace(/{identifier}/, this.identifier()) : this.report().title;
   }
 
   get currentZoomLevel(): ReportZoomLevel {
@@ -186,11 +189,11 @@ export class ReportComponent implements OnInit, OnChanges {
 
     this.store$.pipe(
       waitForPreferences,
-      filter(() => Boolean(this.lineChart?.chart)),
+      filter(() => Boolean(this.lineChart()?.chart)),
       delay(toggleMenuDuration),
       untilDestroyed(this),
     ).subscribe(() => {
-      this.lineChart.chart.resize();
+      this.lineChart().chart.resize();
     });
 
     this.store$.pipe(
@@ -233,8 +236,8 @@ export class ReportComponent implements OnInit, OnChanges {
       this.currentStartDate = rrdOptions.start;
       this.currentEndDate = rrdOptions.end;
 
-      const identifier = this.report.identifiers ? this.report.identifiers[0] : null;
-      this.fetchReport$.next({ rrdOptions, identifier, report: this.report });
+      const identifier = this.report().identifiers ? this.report().identifiers[0] : null;
+      this.fetchReport$.next({ rrdOptions, identifier, report: this.report() });
     });
   }
 
@@ -284,8 +287,8 @@ export class ReportComponent implements OnInit, OnChanges {
     this.currentStartDate = rrdOptions.start;
     this.currentEndDate = rrdOptions.end;
     this.customZoom = false;
-    const identifier = this.report.identifiers ? this.report.identifiers[0] : null;
-    this.fetchReport$.next({ rrdOptions, identifier, report: this.report });
+    const identifier = this.report().identifiers ? this.report().identifiers[0] : null;
+    this.fetchReport$.next({ rrdOptions, identifier, report: this.report() });
     this.clearLastEndDateForCurrentZoomLevel();
   }
 
@@ -314,8 +317,8 @@ export class ReportComponent implements OnInit, OnChanges {
     this.currentStartDate = rrdOptions.start;
     this.currentEndDate = rrdOptions.end;
     this.customZoom = false;
-    const identifier = this.report.identifiers ? this.report.identifiers[0] : null;
-    this.fetchReport$.next({ rrdOptions, identifier, report: this.report });
+    const identifier = this.report().identifiers ? this.report().identifiers[0] : null;
+    this.fetchReport$.next({ rrdOptions, identifier, report: this.report() });
   }
 
   timeZoomOut(): void {
@@ -339,8 +342,8 @@ export class ReportComponent implements OnInit, OnChanges {
     this.currentEndDate = rrdOptions.end;
     this.customZoom = false;
     this.lastEndDateForCurrentZoomLevel[this.currentZoomLevel] = null;
-    const identifier = this.report.identifiers ? this.report.identifiers[0] : null;
-    this.fetchReport$.next({ rrdOptions, identifier, report: this.report });
+    const identifier = this.report().identifiers ? this.report().identifiers[0] : null;
+    this.fetchReport$.next({ rrdOptions, identifier, report: this.report() });
   }
 
   stepBack(): void {
@@ -358,8 +361,8 @@ export class ReportComponent implements OnInit, OnChanges {
     this.currentStartDate = rrdOptions.start;
     this.currentEndDate = rrdOptions.end;
 
-    const identifier = this.report.identifiers ? this.report.identifiers[0] : null;
-    this.fetchReport$.next({ rrdOptions, identifier, report: this.report });
+    const identifier = this.report().identifiers ? this.report().identifiers[0] : null;
+    this.fetchReport$.next({ rrdOptions, identifier, report: this.report() });
   }
 
   stepForward(): void {
@@ -377,8 +380,8 @@ export class ReportComponent implements OnInit, OnChanges {
     this.currentStartDate = rrdOptions.start;
     this.currentEndDate = rrdOptions.end;
 
-    const identifier = this.report.identifiers ? this.report.identifiers[0] : null;
-    this.fetchReport$.next({ rrdOptions, identifier, report: this.report });
+    const identifier = this.report().identifiers ? this.report().identifiers[0] : null;
+    this.fetchReport$.next({ rrdOptions, identifier, report: this.report() });
   }
 
   getDateFromString(timestamp: string): Date {
@@ -488,19 +491,20 @@ export class ReportComponent implements OnInit, OnChanges {
         this.data = formatData(cloneDeep(event));
         this.cdr.markForCheck();
       },
-      error: (err: ApiError) => {
+      error: (err: unknown) => {
         this.handleError(err);
         this.cdr.markForCheck();
       },
     });
   }
 
-  handleError(err: ApiError): void {
-    if (err?.error === (ReportingDatabaseError.FailedExport as number)) {
-      this.report.errorConf = {
+  handleError(err: unknown): void {
+    const apiError = extractApiError(err);
+    if (apiError?.error === (ReportingDatabaseError.FailedExport as number)) {
+      this.report().errorConf = {
         type: EmptyType.Errors,
         title: this.translate.instant('Error getting chart data'),
-        message: err.reason,
+        message: apiError.reason,
       };
     }
   }

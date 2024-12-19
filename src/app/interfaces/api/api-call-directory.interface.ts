@@ -3,7 +3,6 @@ import { CloudsyncTransferSetting } from 'app/enums/cloudsync-transfer-setting.e
 import { DatasetRecordSize, DatasetType } from 'app/enums/dataset.enum';
 import { DeviceType } from 'app/enums/device-type.enum';
 import { DockerConfig, DockerStatusData } from 'app/enums/docker-config.interface';
-import { DockerNvidiaStatusResponse } from 'app/enums/docker-nvidia-status.enum';
 import { FailoverDisabledReason } from 'app/enums/failover-disabled-reason.enum';
 import { FailoverStatus } from 'app/enums/failover-status.enum';
 import { OnOff } from 'app/enums/on-off.enum';
@@ -11,7 +10,7 @@ import { ProductType } from 'app/enums/product-type.enum';
 import { RdmaProtocolName, ServiceName } from 'app/enums/service-name.enum';
 import { SmbInfoLevel } from 'app/enums/smb-info-level.enum';
 import { TransportMode } from 'app/enums/transport-mode.enum';
-import { VirtualizationGpuType, VirtualizationType } from 'app/enums/virtualization.enum';
+import { VirtualizationGpuType, VirtualizationNicType, VirtualizationType } from 'app/enums/virtualization.enum';
 import {
   Acl,
   AclQueryParams,
@@ -27,6 +26,7 @@ import {
   Alert, AlertCategory, AlertClasses, AlertClassesUpdate,
 } from 'app/interfaces/alert.interface';
 import { ApiKey, CreateApiKeyRequest, UpdateApiKeyRequest } from 'app/interfaces/api-key.interface';
+import { ApiEventMethod } from 'app/interfaces/api-message.interface';
 import {
   App,
   AppQueryParams,
@@ -111,9 +111,11 @@ import {
   FailoverUpdate,
 } from 'app/interfaces/failover.interface';
 import {
+  FibreChannelHost,
   FibreChannelPort,
   FibreChannelPortChoices,
   FibreChannelPortUpdate,
+  FibreChannelStatus,
 } from 'app/interfaces/fibre-channel.interface';
 import { FileRecord, ListdirQueryParams } from 'app/interfaces/file-record.interface';
 import { FileSystemStat, Statfs } from 'app/interfaces/filesystem-stat.interface';
@@ -321,6 +323,7 @@ export interface ApiCallDirectory {
   'app.latest': { params: QueryParams<AvailableApp>; response: AvailableApp[] };
   'app.similar': { params: [app_name: string, train: string]; response: AvailableApp[] };
   'app.rollback_versions': { params: [app_name: string]; response: string[] };
+  'app.ix_volume.exists': { params: [string]; response: boolean };
 
   // App Image
   'app.image.delete': { params: DeleteContainerImageParams; response: boolean };
@@ -408,11 +411,14 @@ export interface ApiCallDirectory {
   'cloudsync.update': { params: [id: number, task: CloudSyncTaskUpdate]; response: CloudSyncTask };
 
   // Core
+  'core.ping': { params: void; response: 'pong' };
   'core.download': { params: CoreDownloadQuery; response: CoreDownloadResponse };
   'core.get_jobs': { params: QueryParams<Job>; response: Job[] };
   'core.job_abort': { params: [jobId: number]; response: void };
   'core.job_download_logs': { params: [ id: number, filename: string ]; response: string };
   'core.resize_shell': { params: ResizeShellRequest; response: void };
+  'core.subscribe': { params: [name: ApiEventMethod]; response: void };
+  'core.unsubscribe': { params: [id: string]; response: void };
 
   // Cronjob
   'cronjob.create': { params: [CronjobUpdate]; response: Cronjob };
@@ -457,12 +463,17 @@ export interface ApiCallDirectory {
   // Fibre Channel
   'fc.capable': { params: []; response: boolean };
 
+  // Fibre Channel Host
+  'fc.fc_host.query': { params: []; response: FibreChannelHost[] };
+  'fc.fc_host.update': { params: [id: number, changes: Partial<FibreChannelHost>]; response: void };
+
   // Fibre Channel Port
   'fcport.create': { params: [FibreChannelPortUpdate]; response: FibreChannelPort };
   'fcport.update': { params: [id: number, update: FibreChannelPortUpdate]; response: FibreChannelPort };
   'fcport.delete': { params: [id: number]; response: true };
   'fcport.port_choices': { params: [include_used?: boolean]; response: FibreChannelPortChoices };
   'fcport.query': { params: QueryParams<FibreChannelPort>; response: FibreChannelPort[] };
+  'fcport.status': { params: []; response: FibreChannelStatus[] };
 
   // Filesystem
   'filesystem.acltemplate.by_path': { params: [AclTemplateByPathParams]; response: AclTemplateByPath[] };
@@ -596,7 +607,7 @@ export interface ApiCallDirectory {
   // Docker
   'docker.config': { params: void; response: DockerConfig };
   'docker.status': { params: void; response: DockerStatusData };
-  'docker.nvidia_status': { params: void; response: DockerNvidiaStatusResponse };
+  'docker.nvidia_present': { params: void; response: boolean };
 
   // LDAP
   'ldap.config': { params: void; response: LdapConfig };
@@ -647,7 +658,6 @@ export interface ApiCallDirectory {
   'pool.online': { params: [id: number, params: { label: string }]; response: boolean };
   'pool.processes': { params: [id: number]; response: Process[] };
   'pool.query': { params: QueryParams<Pool>; response: Pool[] };
-  'app.ix_volume.exists': { params: [string]; response: boolean };
   'pool.resilver.config': { params: void; response: ResilverConfig };
   'pool.resilver.update': { params: [ResilverConfigUpdate]; response: ResilverConfig };
   'pool.scrub.create': { params: [CreatePoolScrubTask]; response: PoolScrubTask };
@@ -692,7 +702,6 @@ export interface ApiCallDirectory {
   'reporting.exporters.update': { params: [number, UpdateReportingExporter]; response: ReportingExporter };
   'reporting.netdata_get_data': { params: ReportingQueryParams; response: ReportingData[] };
   'reporting.netdata_graphs': { params: QueryParams<ReportingGraph>; response: ReportingGraph[] };
-  'reporting.netdataweb_generate_password': { params: []; response: string };
 
   // Rsynctask
   'rsynctask.create': { params: [RsyncTaskUpdate]; response: RsyncTask };
@@ -859,6 +868,7 @@ export interface ApiCallDirectory {
     response: AvailableGpus;
   };
   'virt.device.usb_choices': { params: []; response: Record<string, AvailableUsb> };
+  'virt.device.nic_choices': { params: [nicType: VirtualizationNicType]; response: Record<string, string> };
 
   'virt.global.bridge_choices': { params: []; response: Choices };
   'virt.global.config': { params: []; response: VirtualizationGlobalConfig };

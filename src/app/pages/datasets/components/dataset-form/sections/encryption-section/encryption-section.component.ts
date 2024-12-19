@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, output,
+  ChangeDetectionStrategy, Component, computed, input, OnChanges, OnInit, output,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { marker as T } from '@biesbjerg/ngx-translate-extract-marker';
@@ -36,16 +36,16 @@ import { ApiService } from 'app/services/websocket/api.service';
   ],
 })
 export class EncryptionSectionComponent implements OnChanges, OnInit {
-  @Input() parent: Dataset;
-  @Input() advancedMode: boolean;
+  readonly parent = input<Dataset>();
+  readonly advancedMode = input<boolean>();
 
   readonly formValidityChange = output<boolean>();
 
-  get inheritEncryptionLabel(): string {
-    return this.parent.encrypted
+  protected inheritEncryptionLabel = computed(() => {
+    return this.parent().encrypted
       ? this.translate.instant('Inherit (encrypted)')
       : this.translate.instant('Inherit (non-encrypted)');
-  }
+  });
 
   // TODO: Add conditional validators
   readonly form = this.formBuilder.group({
@@ -95,14 +95,14 @@ export class EncryptionSectionComponent implements OnChanges, OnInit {
     return this.form.controls.encryption_type.value === DatasetEncryptionType.Passphrase;
   }
 
-  get parentHasPassphrase(): boolean {
-    return this.parent
-      && this.parent.encrypted
-      && this.parent.key_format.value === EncryptionKeyFormat.Passphrase;
-  }
+  protected parentHasPassphrase = computed(() => {
+    return this.parent()
+      && this.parent().encrypted
+      && this.parent().key_format.value === EncryptionKeyFormat.Passphrase;
+  });
 
   ngOnChanges(): void {
-    if (this.parent) {
+    if (this.parent()) {
       this.setInheritValues();
       this.disableEncryptionIfParentEncrypted();
     }
@@ -145,17 +145,17 @@ export class EncryptionSectionComponent implements OnChanges, OnInit {
   }
 
   private setInheritValues(): void {
-    if (this.parentHasPassphrase) {
+    if (this.parentHasPassphrase()) {
       this.form.controls.encryption_type.setValue(DatasetEncryptionType.Passphrase);
     }
 
-    if (this.parent.encrypted && this.parent.encryption_algorithm?.value) {
-      this.form.controls.algorithm.setValue(this.parent.encryption_algorithm.value);
+    if (this.parent().encrypted && this.parent().encryption_algorithm?.value) {
+      this.form.controls.algorithm.setValue(this.parent().encryption_algorithm.value);
     }
   }
 
   private disableEncryptionIfParentEncrypted(): void {
-    if (!this.parent?.encrypted) {
+    if (!this.parent()?.encrypted) {
       return;
     }
     this.form.controls.encryption.disable();

@@ -39,7 +39,7 @@ import {
   Pool,
   PoolAttachParams,
   PoolExpandParams,
-  PoolReplaceParams,
+  PoolReplaceParams, PruneDedupTableParams,
   UpdatePool,
 } from 'app/interfaces/pool.interface';
 import { RebootParams } from 'app/interfaces/reboot.interface';
@@ -89,6 +89,7 @@ export interface ApiJobDirectory {
   'app.delete': { params: AppDeleteParams; response: boolean };
   'app.upgrade': { params: AppUpgradeParams; response: App };
   'app.rollback': { params: AppRollbackParams; response: App };
+  'app.convert_to_custom': { params: [appName: string]; response: App };
 
   // CloudBackup
   'cloud_backup.sync': { params: [id: number, params?: { dry_run: boolean }]; response: void };
@@ -162,6 +163,7 @@ export interface ApiJobDirectory {
   'pool.dataset.export_key': { params: [id: string, download?: boolean]; response: string };
   'pool.dataset.lock': { params: DatasetLockParams; response: boolean };
   'pool.dataset.unlock': { params: [path: string, params: DatasetUnlockParams]; response: DatasetUnlockResult };
+  'pool.ddt_prune': { params: [PruneDedupTableParams]; response: void };
 
   // Replication
   'replication.run': { params: [id: number]; response: number };

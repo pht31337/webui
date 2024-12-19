@@ -13,6 +13,7 @@ export class HasAccessDirective {
   private wrapperContainer: ComponentRef<MissingAccessWrapperComponent>;
   private previousAccess: boolean = null;
 
+  // eslint-disable-next-line @angular-eslint/prefer-signals
   @Input()
   set ixHasAccess(hasAccess: boolean) {
     if (this.previousAccess === hasAccess) {
@@ -23,8 +24,8 @@ export class HasAccessDirective {
 
     if (!hasAccess) {
       this.wrapperContainer = this.viewContainerRef.createComponent(MissingAccessWrapperComponent);
-      this.wrapperContainer.instance.template = this.templateRef;
-      this.wrapperContainer.instance.class = this.elementClass;
+      this.wrapperContainer.setInput('template', this.templateRef);
+      this.wrapperContainer.setInput('class', this.elementClass);
     } else {
       this.viewContainerRef.createEmbeddedView(this.templateRef);
     }
@@ -32,6 +33,7 @@ export class HasAccessDirective {
 
   protected cssClassList: string[] = [];
 
+  // eslint-disable-next-line @angular-eslint/prefer-signals
   @Input('class')
   @HostBinding('class')
   get elementClass(): string {

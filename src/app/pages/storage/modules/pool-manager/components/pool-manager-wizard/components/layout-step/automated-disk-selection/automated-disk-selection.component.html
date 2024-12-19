@@ -1,4 +1,4 @@
-@if (canChangeLayout) {
+@if (canChangeLayout()) {
   <div class="layout-container">
     <ix-select
       [ixTestOverride]="['layout']"
@@ -11,14 +11,14 @@
     ></ix-select>
   </div>
 } @else {
-  @if (isDataVdev || isMetadataVdev) {
+  @if (isDataVdev() || isMetadataVdev()) {
     <ix-input
       [ixTestOverride]="['layout']"
       [keepLastPart]="true"
       [formControl]="layoutControl"
       [label]="'Layout' | translate"
       [readonly]="true"
-      [tooltip]="dataLayoutTooltip"
+      [tooltip]="dataLayoutTooltip()"
       [required]="false"
     ></ix-input>
   }
@@ -27,16 +27,16 @@
 @if (usesDraidLayout) {
   <ix-draid-selection
     [layout]="layoutControl.value | cast"
-    [inventory]="inventory"
-    [type]="type"
-    [isStepActive]="isStepActive"
+    [inventory]="inventory()"
+    [type]="type()"
+    [isStepActive]="isStepActive()"
   ></ix-draid-selection>
 } @else {
   <ix-normal-selection
     [layout]="layoutControl.value"
-    [inventory]="inventory"
-    [type]="type"
-    [isStepActive]="isStepActive"
+    [inventory]="inventory()"
+    [type]="type()"
+    [isStepActive]="isStepActive()"
   ></ix-normal-selection>
 }
 

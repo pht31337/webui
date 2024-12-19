@@ -3,8 +3,8 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
-  ViewChild,
   ViewContainerRef,
+  viewChild,
 } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -73,7 +73,7 @@ export class CloudCredentialsFormComponent implements OnInit {
 
   commonForm = this.formBuilder.group({
     name: ['Storj', Validators.required],
-    provider: [CloudSyncProviderName.Storj],
+    type: [CloudSyncProviderName.Storj],
   });
 
   isLoading = false;
@@ -85,7 +85,7 @@ export class CloudCredentialsFormComponent implements OnInit {
   forbiddenNames: string[] = [];
   credentials: CloudSyncCredential[] = [];
 
-  @ViewChild('providerFormContainer', { static: true, read: ViewContainerRef }) providerFormContainer: ViewContainerRef;
+  private readonly providerFormContainer = viewChild('providerFormContainer', { read: ViewContainerRef });
 
   readonly helptext = helptext;
 
@@ -109,8 +109,8 @@ export class CloudCredentialsFormComponent implements OnInit {
   }
 
   get showProviderDescription(): boolean {
-    return this.commonForm.controls.provider.enabled
-      && this.commonForm.controls.provider.value === CloudSyncProviderName.Storj;
+    return this.commonForm.controls.type.enabled
+      && this.commonForm.controls.type.value === CloudSyncProviderName.Storj;
   }
 
   get isNew(): boolean {
@@ -119,7 +119,7 @@ export class CloudCredentialsFormComponent implements OnInit {
 
   get selectedProvider(): CloudSyncProvider {
     return this.providers?.find((provider) => {
-      return provider.name === this.commonForm.controls.provider.value;
+      return provider.name === this.commonForm.controls.type.value;
     });
   }
 
@@ -138,10 +138,13 @@ export class CloudCredentialsFormComponent implements OnInit {
   }
 
   setCredentialsForEdit(): void {
-    this.commonForm.patchValue(this.existingCredential);
+    this.commonForm.setValue({
+      name: this.existingCredential.name,
+      type: this.existingCredential.provider.type,
+    });
 
     if (this.providerForm) {
-      this.providerForm.getFormSetter$().next(this.existingCredential.attributes);
+      this.providerForm.getFormSetter$().next(this.existingCredential.provider);
     }
   }
 
@@ -186,9 +189,9 @@ export class CloudCredentialsFormComponent implements OnInit {
     this.providerForm.beforeSubmit()
       .pipe(
         switchMap(() => {
-          const { name, ...payload } = this.preparePayload();
+          const payload = this.preparePayload();
 
-          return this.api.call('cloudsync.credentials.verify', [payload]);
+          return this.api.call('cloudsync.credentials.verify', [payload.provider]);
         }),
         untilDestroyed(this),
       )
@@ -219,8 +222,10 @@ export class CloudCredentialsFormComponent implements OnInit {
     const commonValues = this.commonForm.value;
     return {
       name: commonValues.name,
-      provider: commonValues.provider,
-      attributes: this.providerForm.getSubmitAttributes(),
+      provider: {
+        ...this.providerForm.getSubmitAttributes(),
+        type: commonValues.type,
+      },
     };
   }
 
@@ -247,7 +252,7 @@ export class CloudCredentialsFormComponent implements OnInit {
           this.setNamesInUseValidator(credentials);
           this.renderProviderForm();
           if (this.existingCredential) {
-            this.providerForm.getFormSetter$().next(this.existingCredential.attributes);
+            this.providerForm.getFormSetter$().next(this.existingCredential.provider);
           }
           this.isLoading = false;
           this.cdr.markForCheck();
@@ -261,7 +266,7 @@ export class CloudCredentialsFormComponent implements OnInit {
   }
 
   private setFormEvents(): void {
-    this.commonForm.controls.provider.valueChanges
+    this.commonForm.controls.type.valueChanges
       .pipe(untilDestroyed(this))
       .subscribe(() => {
         this.renderProviderForm();
@@ -284,13 +289,13 @@ export class CloudCredentialsFormComponent implements OnInit {
   }
 
   private renderProviderForm(): void {
-    this.providerFormContainer?.clear();
+    this.providerFormContainer()?.clear();
     if (!this.selectedProvider) {
       return;
     }
 
     const formClass = getProviderFormClass(this.selectedProvider.name);
-    const formRef = this.providerFormContainer.createComponent(formClass);
+    const formRef = this.providerFormContainer().createComponent(formClass);
     formRef.instance.provider = this.selectedProvider;
     this.providerForm = formRef.instance;
   }

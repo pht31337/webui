@@ -2,7 +2,7 @@
   <mat-card-header>
     <h3 mat-card-title>
       {{ 'ZFS Health' | translate }}
-      <ix-pool-card-icon [type]="iconType" [tooltip]="iconTooltip"></ix-pool-card-icon>
+      <ix-pool-card-icon [type]="iconType()" [tooltip]="iconTooltip()"></ix-pool-card-icon>
     </h3>
 
     @if (!wasScanInitiated) {
@@ -122,6 +122,21 @@
           </div>
         }
       }
+    }
+
+    @if (pool().dedup_table_size > 0) {
+      <div class="details-item">
+        <div class="label">{{ 'Deduplication Table' | translate }}:</div>
+        <div class="value">{{ deduplicationStats() }}</div>
+        <div class="dedup-actions">
+          <a *ixRequiresRoles="requiredRoles" class="action" ixTest="prune-dedup" (click)="onPruneDedupTable()">
+            {{ 'Prune' | translate }}
+          </a>
+          <a *ixRequiresRoles="requiredRoles" class="action" ixTest="set-dedup-quota" (click)="onSetDedupQuota()">
+            {{ 'Set Quota' | translate }}
+          </a>
+        </div>
+      </div>
     }
   </mat-card-content>
 </mat-card>

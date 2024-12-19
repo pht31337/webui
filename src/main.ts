@@ -1,5 +1,7 @@
 import { provideHttpClient, withInterceptorsFromDi, HttpClient } from '@angular/common/http';
-import { enableProdMode, ErrorHandler, importProvidersFrom } from '@angular/core';
+import {
+  enableProdMode, ErrorHandler, importProvidersFrom, inject,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
   provideNativeDateAdapter,
@@ -13,6 +15,8 @@ import {
   provideRouter,
   PreloadAllModules,
   withComponentInputBinding,
+  withNavigationErrorHandler,
+  NavigationError,
 } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideRouterStore } from '@ngrx/router-store';
@@ -27,6 +31,7 @@ import { NgxPopperjsModule } from 'ngx-popperjs';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { TranslateMessageFormatCompiler } from 'ngx-translate-messageformat-compiler';
 import { provideNgxWebstorage, withLocalStorage } from 'ngx-webstorage';
+import { AppComponent } from 'app/app.component';
 import { rootRoutes } from 'app/app.routes';
 import { IcuMissingTranslationHandler } from 'app/core/classes/icu-missing-translation-handler';
 import { createTranslateLoader } from 'app/core/classes/icu-translations-loader';
@@ -35,10 +40,10 @@ import { WINDOW, getWindow } from 'app/helpers/window.helper';
 import { IxIconRegistry } from 'app/modules/ix-icon/ix-icon-registry.service';
 import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { ApiService } from 'app/services/websocket/api.service';
+import { SubscriptionManagerService } from 'app/services/websocket/subscription-manager.service';
 import { WebSocketHandlerService } from 'app/services/websocket/websocket-handler.service';
 import { rootReducers, rootEffects } from 'app/store';
 import { CustomRouterStateSerializer } from 'app/store/router/custom-router-serializer';
-import { AppComponent } from './app/app.component';
 
 if (environment.production) {
   enableProdMode();
@@ -112,17 +117,32 @@ bootstrapApplication(AppComponent, {
     },
     {
       provide: ApiService,
-      deps: [WebSocketHandlerService, TranslateService],
-      useFactory: (connection: WebSocketHandlerService, translate: TranslateService) => {
+      deps: [WebSocketHandlerService, SubscriptionManagerService, TranslateService],
+      useFactory: (
+        connection: WebSocketHandlerService,
+        subscriptionManager: SubscriptionManagerService,
+        translate: TranslateService,
+      ) => {
         if (environment.mockConfig.enabled) {
-          return new MockEnclosureApiService(connection, translate);
+          return new MockEnclosureApiService(connection, subscriptionManager, translate);
         }
-        return new ApiService(connection, translate);
+        return new ApiService(connection, subscriptionManager, translate);
       },
     },
     provideCharts(withDefaultRegisterables()),
     provideHttpClient(withInterceptorsFromDi()),
     provideAnimations(),
-    provideRouter(rootRoutes, withPreloading(PreloadAllModules), withComponentInputBinding()),
+    provideRouter(
+      rootRoutes,
+      withPreloading(PreloadAllModules),
+      withComponentInputBinding(),
+      withNavigationErrorHandler((error: NavigationError) => {
+        const chunkFailedMessage = /Loading chunk \d+ failed/;
+        if (chunkFailedMessage.test(String(error.error))) {
+          inject<Window>(WINDOW).location.reload();
+        }
+        console.error(error);
+      }),
+    ),
   ],
 });

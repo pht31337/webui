@@ -1,4 +1,4 @@
-<ix-page-header>
+<ix-page-header [customBadgeTitle]="'Experimental' | translate">
   <ix-all-instances-header></ix-all-instances-header>
 </ix-page-header>
 
@@ -9,11 +9,11 @@
   <ix-instance-list
     master
     [isMobileView]="masterDetailView.isMobileView()"
-    [showMobileDetails]="masterDetailView.showMobileDetails()"
     (toggleShowMobileDetails)="masterDetailView.toggleShowMobileDetails($event)"
   ></ix-instance-list>
 
-  <ng-container detail-name>
+  <ng-container detail-header>
+    {{ 'Details for' | translate }}
     {{ selectedInstance()?.name }}
   </ng-container>
 
@@ -21,7 +21,6 @@
     @if (selectedInstance()) {
       <ix-instance-details
         [instance]="selectedInstance()"
-        (onCloseMobileDetails)="masterDetailView.toggleShowMobileDetails(false)"
       ></ix-instance-details>
     }
   </ng-container>

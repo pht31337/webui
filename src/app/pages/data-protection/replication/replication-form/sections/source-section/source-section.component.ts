@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, Input, OnChanges,
+  ChangeDetectionStrategy, Component, computed, input, OnChanges,
 } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
@@ -50,9 +50,9 @@ import { ApiService } from 'app/services/websocket/api.service';
   ],
 })
 export class SourceSectionComponent implements OnChanges {
-  @Input() replication: ReplicationTask;
-  @Input() direction: Direction;
-  @Input() nodeProvider: TreeNodeProvider;
+  readonly replication = input<ReplicationTask>();
+  readonly direction = input<Direction>();
+  readonly nodeProvider = input<TreeNodeProvider>();
 
   form = this.formBuilder.group({
     source_datasets: [[] as string | string[], Validators.required],
@@ -102,30 +102,30 @@ export class SourceSectionComponent implements OnChanges {
   ) {}
 
   ngOnChanges(): void {
-    if (this.replication) {
-      this.setFormValues(this.replication);
+    if (this.replication()) {
+      this.setFormValues(this.replication());
     }
 
-    if (this.nodeProvider) {
+    if (this.nodeProvider()) {
       this.form.controls.source_datasets.enable();
     } else {
       this.form.controls.source_datasets.disable();
     }
   }
 
-  get isPush(): boolean {
-    return this.direction === Direction.Push;
-  }
+  protected isPush = computed(() => {
+    return this.direction() === Direction.Push;
+  });
 
   get usesNamingSchema(): boolean {
     return this.form.controls.schema_or_regex.value === SnapshotNamingOption.NamingSchema;
   }
 
-  get nameOrRegexLabel(): string {
-    return this.isPush
+  protected nameOrRegexLabel = computed(() => {
+    return this.isPush()
       ? this.translate.instant('Also include snapshots with the name')
       : this.translate.instant('Include snapshots with the name');
-  }
+  });
 
   setFormValues(replication: ReplicationTask): void {
     this.form.patchValue({
@@ -137,7 +137,7 @@ export class SourceSectionComponent implements OnChanges {
       schema_or_regex: replication.name_regex ? SnapshotNamingOption.NameRegex : SnapshotNamingOption.NamingSchema,
     });
 
-    if (this.replication.restrict_schedule) {
+    if (this.replication().restrict_schedule) {
       this.form.patchValue({
         restrict_schedule_picker: replication.restrict_schedule
           ? scheduleToCrontab(replication.restrict_schedule)
@@ -165,7 +165,7 @@ export class SourceSectionComponent implements OnChanges {
       exclude: values.exclude,
     };
 
-    if (this.isPush) {
+    if (this.isPush()) {
       payload.periodic_snapshot_tasks = values.periodic_snapshot_tasks;
     } else {
       payload.periodic_snapshot_tasks = [];

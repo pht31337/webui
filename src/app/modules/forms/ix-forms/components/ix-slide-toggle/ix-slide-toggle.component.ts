@@ -1,13 +1,14 @@
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, Input,
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, input,
 } from '@angular/core';
 import {
   ControlValueAccessor, NgControl,
+  ReactiveFormsModule,
 } from '@angular/forms';
 import { MatSlideToggleChange, MatSlideToggle } from '@angular/material/slide-toggle';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { IxErrorsComponent } from 'app/modules/forms/ix-forms/components/ix-errors/ix-errors.component';
-import { RegisteredControlDirective } from 'app/modules/forms/ix-forms/directives/registered-control.directive';
+import { registeredDirectiveConfig } from 'app/modules/forms/ix-forms/directives/registered-control.directive';
 import { TestDirective } from 'app/modules/test-id/test.directive';
 import { TooltipComponent } from 'app/modules/tooltip/tooltip.component';
 
@@ -19,18 +20,20 @@ import { TooltipComponent } from 'app/modules/tooltip/tooltip.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
+    ReactiveFormsModule,
     MatSlideToggle,
     TooltipComponent,
     IxErrorsComponent,
     TestDirective,
-    RegisteredControlDirective,
+  ],
+  hostDirectives: [
+    { ...registeredDirectiveConfig },
   ],
 })
 export class IxSlideToggleComponent implements ControlValueAccessor {
-  @Input() label: string;
-  @Input() hint: string;
-  @Input() tooltip: string;
-  @Input() required: boolean;
+  readonly label = input<string>();
+  readonly tooltip = input<string>();
+  readonly required = input<boolean>();
 
   isDisabled = false;
   value: boolean;

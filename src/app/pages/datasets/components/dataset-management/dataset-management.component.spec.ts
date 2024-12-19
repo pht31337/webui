@@ -1,9 +1,11 @@
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { createRoutingFactory, SpectatorRouting, mockProvider } from '@ngneat/spectator/jest';
+import { MockComponent } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { mockCall, mockApi } from 'app/core/testing/utils/mock-api.utils';
 import { mockAuth } from 'app/core/testing/utils/mock-auth.utils';
+import { ErrorResponse } from 'app/interfaces/api-message.interface';
 import { SystemDatasetConfig } from 'app/interfaces/system-dataset-config.interface';
 import { EmptyComponent } from 'app/modules/empty/empty.component';
 import { SearchInput1Component } from 'app/modules/forms/search-input1/search-input1.component';
@@ -28,7 +30,7 @@ describe('DatasetsManagementComponent', () => {
     component: DatasetsManagementComponent,
     imports: [
       SearchInput1Component,
-      EmptyComponent,
+      MockComponent(EmptyComponent),
       FakeProgressBarComponent,
     ],
     providers: [
@@ -77,7 +79,14 @@ describe('DatasetsManagementComponent', () => {
   });
 
   it('should display error when datasets loading fails', () => {
-    error$.next({ reason: 'Network Error' });
+    error$.next({
+      jsonrpc: '2.0',
+      error: {
+        data: {
+          reason: 'Network Error',
+        },
+      },
+    } as ErrorResponse);
     datasets$.next([]);
 
     spectator.detectChanges();

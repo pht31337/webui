@@ -1,17 +1,16 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   ChangeDetectionStrategy, ChangeDetectorRef,
-  Component,
+  Component, computed,
   ElementRef,
   HostListener,
-  Injector,
-  Input,
+  Injector, input,
   OnDestroy,
   OnInit,
   Renderer2,
   Type,
-  ViewChild,
   ViewContainerRef,
+  viewChild,
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,19 +36,20 @@ import {
   imports: [CdkTrapFocus],
 })
 export class SlideIn2Component implements OnInit, OnDestroy {
-  @Input() componentInfo: ChainedComponentSerialized;
-  @Input() index: number;
-  @Input() lastIndex: number;
-  @ViewChild('chainedBody', { static: true, read: ViewContainerRef }) slideInBody: ViewContainerRef;
+  readonly componentInfo = input<ChainedComponentSerialized>();
+  readonly index = input<number>();
+  readonly lastIndex = input<number>();
+
+  private readonly slideInBody = viewChild('chainedBody', { read: ViewContainerRef });
   private needConfirmation: () => Observable<boolean>;
 
   @HostListener('document:keydown.escape') onKeydownHandler(): void {
     this.onBackdropClicked();
   }
 
-  get isTop(): boolean {
-    return this.index === this.lastIndex;
-  }
+  protected isTop = computed(() => {
+    return this.index() === this.lastIndex();
+  });
 
   isSlideInOpen = false;
   wide = false;
@@ -70,15 +70,15 @@ export class SlideIn2Component implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // ensure id attribute exists
-    if (!this.componentInfo.id) {
+    if (!this.componentInfo().id) {
       return;
     }
 
     // move element to bottom of page (just before </body>) so it can be displayed above everything else
     document.body.appendChild(this.element);
-    if (this.componentInfo.component) {
-      this.openSlideIn(this.componentInfo.component, {
-        wide: this.componentInfo.wide, data: this.componentInfo.data,
+    if (this.componentInfo().component) {
+      this.openSlideIn(this.componentInfo().component, {
+        wide: this.componentInfo().wide, data: this.componentInfo().data,
       });
     }
     this.chainedSlideInService.isTopComponentWide$.pipe(
@@ -89,7 +89,7 @@ export class SlideIn2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.chainedSlideInService.popComponent(this.componentInfo.id);
+    this.chainedSlideInService.popComponent(this.componentInfo().id);
     this.element.remove();
   }
 
@@ -103,8 +103,8 @@ export class SlideIn2Component implements OnInit, OnDestroy {
       untilDestroyed(this),
     ).subscribe({
       next: () => {
-        this.componentInfo.close$.next({ response: false, error: null });
-        this.componentInfo.close$.complete();
+        this.componentInfo().close$.next({ response: false, error: null });
+        this.componentInfo().close$.complete();
         this.closeSlideIn();
       },
     });
@@ -117,13 +117,13 @@ export class SlideIn2Component implements OnInit, OnDestroy {
     this.timeOutOfClear = timer(255).pipe(untilDestroyed(this)).subscribe(() => {
       // Destroying child component later improves performance a little bit.
       // 255ms matches transition duration
-      this.slideInBody.clear();
+      this.slideInBody().clear();
       this.wasBodyCleared = false;
       this.cdr.markForCheck();
       timer(50).pipe(
         untilDestroyed(this),
       ).subscribe({
-        next: () => this.chainedSlideInService.popComponent(this.componentInfo.id),
+        next: () => this.chainedSlideInService.popComponent(this.componentInfo().id),
       });
     });
   }
@@ -146,7 +146,7 @@ export class SlideIn2Component implements OnInit, OnDestroy {
     if (this.wasBodyCleared) {
       this.timeOutOfClear.unsubscribe();
     }
-    this.slideInBody.clear();
+    this.slideInBody().clear();
     this.wasBodyCleared = false;
     // clear body and close all slides
 
@@ -168,8 +168,8 @@ export class SlideIn2Component implements OnInit, OnDestroy {
                 untilDestroyed(this),
               ).subscribe({
                 next: () => {
-                  this.componentInfo.close$.next(response);
-                  this.componentInfo.close$.complete();
+                  this.componentInfo().close$.next(response);
+                  this.componentInfo().close$.complete();
                   this.closeSlideIn();
                 },
               });
@@ -181,7 +181,7 @@ export class SlideIn2Component implements OnInit, OnDestroy {
               ).subscribe({
                 next: () => {
                   this.chainedSlideInService.swapComponent({
-                    swapComponentId: this.componentInfo.id,
+                    swapComponentId: this.componentInfo().id,
                     component,
                     wide,
                     data: incomingComponentData,
@@ -200,7 +200,7 @@ export class SlideIn2Component implements OnInit, OnDestroy {
         },
       ],
     });
-    this.slideInBody.createComponent<T>(componentType, { injector });
+    this.slideInBody().createComponent<T>(componentType, { injector });
   }
 
   private canCloseSlideIn(): Observable<boolean> {

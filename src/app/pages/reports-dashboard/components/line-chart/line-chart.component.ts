@@ -1,12 +1,14 @@
 import {
   Component,
-  Input,
   AfterViewInit,
   OnDestroy,
   OnChanges,
-  ViewChild,
   ElementRef,
-  ChangeDetectionStrategy, output,
+  ChangeDetectionStrategy,
+  output,
+  input,
+  viewChild,
+  Signal,
 } from '@angular/core';
 import { TinyColor } from '@ctrl/tinycolor';
 import { UUID } from 'angular2-uuid';
@@ -42,18 +44,15 @@ interface Conversion {
   standalone: true,
 })
 export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
-  @ViewChild('wrapper', { static: true }) el: ElementRef<HTMLElement>;
-  @Input() chartId: string;
-  @Input() chartColors: string[];
-  @Input() data: ReportingData;
-  @Input() report: Report;
-  @Input() title: string;
-  @Input() timezone: string;
-  @Input() stacked = false;
+  readonly chartId = input<string>();
+  readonly chartColors = input<string[]>([]);
+  readonly data = input<ReportingData>();
+  readonly report = input<Report>();
+  readonly timezone = input<string>();
+  readonly stacked = input(false);
+  readonly labelY = input('Label Y');
 
-  @Input() legends?: string[];
-  @Input() type = 'line';
-  @Input() labelY?: string = 'Label Y';
+  private readonly el: Signal<ElementRef<HTMLElement>> = viewChild('wrapper', { read: ElementRef });
 
   lastMinDate: number;
   lastMaxDate: number;
@@ -80,11 +79,11 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
   }
 
   renderGraph(update?: boolean): void {
-    if (!this.data?.legend?.length) {
+    if (!this.data()?.legend?.length) {
       return;
     }
 
-    const data = this.makeTimeAxis(this.data);
+    const data = this.makeTimeAxis(this.data());
     const labels = data.shift();
     const fg2 = this.themeService.currentTheme().fg2;
     const gridLineColor = new TinyColor(fg2).setAlpha(0.25).toRgbString();
@@ -96,7 +95,7 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
       includeZero: true,
       highlightCircleSize: 4,
       strokeWidth: 1,
-      colors: this.chartColors,
+      colors: this.chartColors(),
       labels, // time axis
       ylabel: this.formatAxisName(),
       gridLineColor,
@@ -112,13 +111,13 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
       series: this.series.bind(this),
       drawCallback: this.drawCallback.bind(this),
       zoomCallback: this.zoomCallback.bind(this),
-      stackedGraph: this.stacked,
+      stackedGraph: this.stacked(),
     } as unknown as dygraphs.Options;
 
     if (update) {
       this.chart.updateOptions(options);
     } else {
-      this.chart = new Dygraph(this.el.nativeElement, data, options);
+      this.chart = new Dygraph(this.el().nativeElement, data, options);
     }
   }
 
@@ -128,7 +127,7 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     const newRows = rowData.map((row, index) => {
       // replace unix timestamp in first column with date
-      const convertedDate = utcToZonedTime(row[0] * 1000, this.timezone);
+      const convertedDate = utcToZonedTime(row[0] * 1000, this.timezone());
 
       if (index === 0) {
         this.lastMinDate = convertedDate.getTime();
@@ -174,29 +173,29 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
         units = 'bits';
         break;
       default:
-        console.warn('Could not infer units from ' + this.labelY);
+        console.warn('Could not infer units from ' + this.labelY());
     }
 
     return units;
   }
 
   formatAxisName(): string {
-    if (this.report.name === ReportingGraphName.NetworkInterface) {
+    if (this.report().name === ReportingGraphName.NetworkInterface) {
       return this.yLabelPrefix + '/s';
     }
     switch (true) {
-      case this.labelY.toLowerCase() === 'seconds':
+      case this.labelY().toLowerCase() === 'seconds':
         return 'Days';
-      case this.labelY.toLowerCase().includes('bits/s'):
+      case this.labelY().toLowerCase().includes('bits/s'):
         return `${this.yLabelPrefix}bits/s`;
-      case this.labelY.toLowerCase().includes('bytes/s'):
+      case this.labelY().toLowerCase().includes('bytes/s'):
         return `${this.yLabelPrefix}bytes/s`;
-      case this.labelY.toLowerCase().includes('bytes'):
+      case this.labelY().toLowerCase().includes('bytes'):
         return `${this.yLabelPrefix}bytes`;
-      case this.labelY.toLowerCase().includes('bits'):
+      case this.labelY().toLowerCase().includes('bits'):
         return `${this.yLabelPrefix}bits`;
       default:
-        return this.labelY;
+        return this.labelY();
     }
   }
 
@@ -276,7 +275,7 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
   }
 
   axisLabelFormatter = (numero: number): string => {
-    if (this.report?.name === ReportingGraphName.NetworkInterface) {
+    if (this.report()?.name === ReportingGraphName.NetworkInterface) {
       if (numero < Mb) {
         if (this.yLabelPrefix === 'Gb') {
           numero /= Gb;
@@ -291,14 +290,14 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
       const [formatted] = normalizeFileSize(numero * 1000, 'b', 10);
       return formatted.toString();
     }
-    const converted = this.formatLabelValue(numero, this.inferUnits(this.labelY), 1, true, true);
+    const converted = this.formatLabelValue(numero, this.inferUnits(this.labelY()), 1, true, true);
     const suffix = converted.suffix ? converted.suffix : '';
     return `${this.limitDecimals(converted.value)}${suffix}`;
   };
 
   series = (): Record<string, { plotter: unknown }> => {
     const series: Record<string, { plotter: unknown }> = {};
-    this.data.legend.forEach((item) => {
+    this.data().legend.forEach((item) => {
       series[item] = { plotter: this.plotterService.getSmoothPlotter() };
     });
 
@@ -314,18 +313,18 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
   };
 
   legendFormatter = (legend: dygraphs.LegendData): string => {
-    const clone = { ...legend, chartId: this.chartId } as LegendDataWithStackedTotalHtml;
+    const clone = { ...legend, chartId: this.chartId() } as LegendDataWithStackedTotalHtml;
     clone.series.forEach((item: dygraphs.SeriesLegendData, index: number): void => {
       if (!item.y) {
         return;
       }
-      if (this.report.name === ReportingGraphName.NetworkInterface) {
+      if (this.report().name === ReportingGraphName.NetworkInterface) {
         clone.series[index].yHTML = buildNormalizedFileSize(item.y * 1000, 'b', 10) + '/s';
       } else {
-        const yConverted = this.formatLabelValue(item.y, this.inferUnits(this.labelY), 1, true);
+        const yConverted = this.formatLabelValue(item.y, this.inferUnits(this.labelY()), 1, true);
         const ySuffix = this.getSuffix(yConverted);
         clone.series[index].yHTML = `${this.limitDecimals(yConverted.value)} ${ySuffix}`;
-        if (this.labelY.endsWith('/s')) {
+        if (this.labelY().endsWith('/s')) {
           clone.series[index].yHTML += '/s';
         }
         if (!clone.stackedTotal) {
@@ -335,7 +334,7 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
         if (clone.stackedTotal >= 0) {
           const stackedTotalConverted = this.formatLabelValue(
             clone.stackedTotal,
-            this.inferUnits(this.labelY),
+            this.inferUnits(this.labelY()),
             1,
             true,
           );
@@ -352,12 +351,12 @@ export class LineChartComponent implements AfterViewInit, OnDestroy, OnChanges {
   drawCallback = (dygraph: Dygraph & { axes_: { maxyval: number }[] }): void => {
     if (dygraph.axes_.length) {
       const numero = dygraph.axes_[0].maxyval;
-      if (this.report?.name === ReportingGraphName.NetworkInterface) {
+      if (this.report()?.name === ReportingGraphName.NetworkInterface) {
         const [, unit] = normalizeFileSize(numero * 1000, 'b', 10);
         this.yLabelPrefix = unit;
         return;
       }
-      const converted = this.formatLabelValue(numero, this.inferUnits(this.labelY));
+      const converted = this.formatLabelValue(numero, this.inferUnits(this.labelY()));
       if (converted.prefix) {
         this.yLabelPrefix = converted.prefix;
       } else {

@@ -1,6 +1,5 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import {
-  ChangeDetectionStrategy, Component, ElementRef, Input, ViewChild,
+  ChangeDetectionStrategy, Component, ElementRef, input, Signal, viewChild,
 } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatDialogTitle } from '@angular/material/dialog';
@@ -30,17 +29,17 @@ import { ApiService } from 'app/services/websocket/api.service';
   ],
 })
 export class ErrorTemplateComponent {
-  @ViewChild('errorMessageWrapper') errorMessageWrapper: ElementRef<HTMLElement>;
-  @ViewChild('errorTitle') errorTitle: ElementRef<HTMLElement>;
-  @ViewChild('errorMdContent') errorMdContent: ElementRef<HTMLElement>;
-  @ViewChild('errorBtPanel') errorBtPanel: ElementRef<HTMLElement>;
-  @ViewChild('errorBtText') errorBtText: ElementRef<HTMLElement>;
+  private readonly errorMessageWrapper: Signal<ElementRef<HTMLElement>> = viewChild('errorMessageWrapper', { read: ElementRef });
+  private readonly errorMdContent: Signal<ElementRef<HTMLElement>> = viewChild('errorMdContent', { read: ElementRef });
+  private readonly errorBtPanel: Signal<ElementRef<HTMLElement>> = viewChild('errorBtPanel', { read: ElementRef });
+  private readonly errorBtText: Signal<ElementRef<HTMLElement>> = viewChild('errorBtText', { read: ElementRef });
 
-  @Input() title: string;
-  @Input() message: string;
-  @Input() backtrace: string;
+  readonly title = input<string>();
+  readonly message = input<string>();
+  readonly backtrace = input<string>();
+  readonly logs = input<Job>();
+
   isCloseMoreInfo = true;
-  @Input() logs: Job;
 
   constructor(
     private api: ApiService,
@@ -50,10 +49,10 @@ export class ErrorTemplateComponent {
   ) {}
 
   toggleOpen(): void {
-    const messageWrapper = this.errorMessageWrapper.nativeElement;
-    const content = this.errorMdContent.nativeElement;
-    const btPanel = this.errorBtPanel.nativeElement;
-    const txtarea = this.errorBtText.nativeElement;
+    const messageWrapper = this.errorMessageWrapper().nativeElement;
+    const content = this.errorMdContent().nativeElement;
+    const btPanel = this.errorBtPanel().nativeElement;
+    const txtarea = this.errorBtText().nativeElement;
 
     this.isCloseMoreInfo = !this.isCloseMoreInfo;
     if (!this.isCloseMoreInfo) {
@@ -68,16 +67,16 @@ export class ErrorTemplateComponent {
   }
 
   downloadLogs(): void {
-    this.api.call('core.job_download_logs', [this.logs.id, `${this.logs.id}.log`])
+    this.api.call('core.job_download_logs', [this.logs().id, `${this.logs().id}.log`])
       .pipe(this.errorHandler.catchError(), untilDestroyed(this))
       .subscribe((url) => {
         const mimetype = 'text/plain';
-        this.download.streamDownloadFile(url, `${this.logs.id}.log`, mimetype).pipe(untilDestroyed(this)).subscribe({
+        this.download.streamDownloadFile(url, `${this.logs().id}.log`, mimetype).pipe(untilDestroyed(this)).subscribe({
           next: (file) => {
-            this.download.downloadBlob(file, `${this.logs.id}.log`);
+            this.download.downloadBlob(file, `${this.logs().id}.log`);
           },
-          error: (error: HttpErrorResponse) => {
-            this.dialogService.error(this.errorHandler.parseHttpError(error));
+          error: (error: unknown) => {
+            this.dialogService.error(this.errorHandler.parseError(error));
           },
         });
       });

@@ -2,11 +2,8 @@ import {
   FormGroup, ReactiveFormsModule,
 } from '@angular/forms';
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { MockComponent } from 'ng-mocks';
 import { DynamicWizardSchema } from 'app/interfaces/dynamic-form-schema.interface';
-import { IxDynamicFormItemComponent } from 'app/modules/forms/ix-dynamic-form/components/ix-dynamic-form/ix-dynamic-form-item/ix-dynamic-form-item.component';
 import { IxDynamicWizardComponent } from 'app/modules/forms/ix-dynamic-form/components/ix-dynamic-wizard/ix-dynamic-wizard.component';
-import { IxFieldsetComponent } from 'app/modules/forms/ix-forms/components/ix-fieldset/ix-fieldset.component';
 
 const dynamicForm = new FormGroup({});
 const dynamicSection = [
@@ -23,30 +20,20 @@ describe('IxDynamicWizardComponent', () => {
     imports: [
       ReactiveFormsModule,
     ],
-    declarations: [
-      MockComponent(IxDynamicFormItemComponent),
-      MockComponent(IxFieldsetComponent),
-    ],
   });
 
   beforeEach(() => {
-    spectator = createComponent();
+    spectator = createComponent({
+      props: { dynamicForm, dynamicSection },
+    });
   });
 
   describe('Component rendering', () => {
     it('renders a correct number of sections', () => {
-      spectator = createComponent({
-        props: { dynamicForm, dynamicSection },
-      });
-
       expect(spectator.queryAll('ix-fieldset')).toHaveLength(dynamicSection.length);
     });
 
     it('renders a correct number of dynamic form', () => {
-      spectator = createComponent({
-        props: { dynamicForm, dynamicSection },
-      });
-
       let dynamicFormsAmount = 0;
       dynamicSection.forEach((section) => dynamicFormsAmount += section.schema.length);
 

@@ -5,13 +5,13 @@ import {
   ElementRef,
   HostListener,
   Injector,
-  Input,
   OnDestroy,
   OnInit,
   Renderer2,
   Type,
-  ViewChild,
   ViewContainerRef,
+  viewChild,
+  input,
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { UUID } from 'angular2-uuid';
@@ -30,8 +30,9 @@ import { SlideInService } from 'app/services/slide-in.service';
   imports: [CdkTrapFocus],
 })
 export class SlideInComponent implements OnInit, OnDestroy {
-  @Input() id: string;
-  @ViewChild('body', { static: true, read: ViewContainerRef }) slideInBody: ViewContainerRef;
+  readonly id = input<string>();
+
+  private readonly slideInBody = viewChild('body', { read: ViewContainerRef });
 
   @HostListener('document:keydown.escape') onKeydownHandler(): void {
     this.onBackdropClicked();
@@ -55,7 +56,7 @@ export class SlideInComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // ensure id attribute exists
-    if (!this.id) {
+    if (!this.id()) {
       return;
     }
 
@@ -79,7 +80,7 @@ export class SlideInComponent implements OnInit, OnDestroy {
     this.timeOutOfClear = timer(200).pipe(untilDestroyed(this)).subscribe(() => {
       // Destroying child component later improves performance a little bit.
       // 200ms matches transition duration
-      this.slideInBody.clear();
+      this.slideInBody().clear();
       this.wasBodyCleared = false;
       this.cdr.markForCheck();
     });
@@ -100,7 +101,7 @@ export class SlideInComponent implements OnInit, OnDestroy {
     if (this.wasBodyCleared) {
       this.timeOutOfClear.unsubscribe();
     }
-    this.slideInBody.clear();
+    this.slideInBody().clear();
     this.wasBodyCleared = false;
     // clear body and close all slides
 
@@ -126,7 +127,7 @@ export class SlideInComponent implements OnInit, OnDestroy {
       ],
       parent: parentInjector,
     });
-    slideInRef.componentRef = this.slideInBody.createComponent<T>(componentType, { injector });
+    slideInRef.componentRef = this.slideInBody().createComponent<T>(componentType, { injector });
     slideInRef.id = UUID.UUID();
 
     return slideInRef;

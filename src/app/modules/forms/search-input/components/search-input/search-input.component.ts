@@ -1,9 +1,7 @@
 import {
   ChangeDetectionStrategy,
-  Component,
-  Input,
-  OnChanges, output,
-  ViewChild,
+  Component, input, model,
+  OnChanges, output, viewChild,
 } from '@angular/core';
 import { QueryFilters } from 'app/interfaces/query-api.interface';
 import { AdvancedSearchComponent } from 'app/modules/forms/search-input/components/advanced-search/advanced-search.component';
@@ -23,15 +21,16 @@ import {
   imports: [AdvancedSearchComponent, BasicSearchComponent],
 })
 export class SearchInputComponent<T> implements OnChanges {
-  @Input() allowAdvanced = true;
-  @Input() properties: SearchProperty<T>[] = [];
-  @Input() query: SearchQuery<T>;
-  @Input() advancedSearchPlaceholder?: string;
+  readonly allowAdvanced = input(true);
+  readonly properties = input<SearchProperty<T>[]>([]);
+  readonly query = model<SearchQuery<T>>();
+  readonly advancedSearchPlaceholder = input<string>();
 
   readonly queryChange = output<SearchQuery<T>>();
   readonly runSearch = output();
 
-  @ViewChild('advancedSearch', { static: false }) advancedSearch: AdvancedSearchComponent<T>;
+  // TODO: Outside of scope for this component. Solve elsewhere.
+  readonly advancedSearch = viewChild('advancedSearch', { read: AdvancedSearchComponent });
 
   ngOnChanges(): void {
     this.selectModeFromQuery();
@@ -50,38 +49,39 @@ export class SearchInputComponent<T> implements OnChanges {
   protected basicSearchUpdated(query: string): void {
     this.basicQuery = query;
     this.updateQuery();
-    this.queryChange.emit(this.query);
+    this.queryChange.emit(this.query());
   }
 
   protected advancedSearchUpdated(query: QueryFilters<T>): void {
     this.advancedQuery = query;
     this.updateQuery();
-    this.queryChange.emit(this.query);
+    this.queryChange.emit(this.query());
   }
 
   private updateQuery(): void {
     if (this.isInAdvancedMode) {
-      this.query = {
+      this.query.set({
         filters: this.advancedQuery,
         isBasicQuery: false,
-      };
+      });
     } else {
-      this.query = {
+      this.query.set({
         query: this.basicQuery,
         isBasicQuery: true,
-      };
+      });
     }
   }
 
   private selectModeFromQuery(): void {
-    if (!this.query) {
+    const query = this.query();
+    if (!query) {
       this.isInAdvancedMode = false;
-    } else if (this.query.isBasicQuery) {
+    } else if (query.isBasicQuery) {
       this.isInAdvancedMode = false;
-      this.basicQuery = this.query.query;
-    } else if (this.allowAdvanced) {
+      this.basicQuery = query.query;
+    } else if (this.allowAdvanced()) {
       this.isInAdvancedMode = true;
-      this.advancedQuery = (this.query as AdvancedSearchQuery<T>).filters;
+      this.advancedQuery = (query as AdvancedSearchQuery<T>).filters;
     }
   }
 }

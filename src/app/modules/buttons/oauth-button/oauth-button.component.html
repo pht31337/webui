@@ -2,10 +2,10 @@
   mat-button
   type="button"
   class="oauth-button"
-  [ixTest]="testId"
-  [disabled]="disabled"
-  [color]="isLoggedIn ? 'accent' : 'primary'"
+  [ixTest]="testId()"
+  [disabled]="disabled()"
+  [color]="isLoggedIn() ? 'accent' : 'primary'"
   (click)="onOauthClicked()"
 >
-  {{ buttonText | translate }}
+  {{ buttonText() | translate }}
 </button>

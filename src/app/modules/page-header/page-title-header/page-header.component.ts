@@ -1,12 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import {
-  ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit,
+  ChangeDetectionStrategy, Component, input, OnDestroy, OnInit,
 } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { FakeProgressBarComponent } from 'app/modules/loader/components/fake-progress-bar/fake-progress-bar.component';
 import { BreadcrumbComponent } from 'app/modules/page-header/breadcrumb/breadcrumb.component';
-import { NewPageBadgeComponent } from 'app/modules/page-header/is-new-indicator/new-page-badge.component';
+import { HeaderBadgeComponent } from 'app/modules/page-header/header-badge/header-badge.component';
 import { LayoutService } from 'app/services/layout.service';
 import { PageTitleService } from 'app/services/page-title.service';
 
@@ -23,31 +23,32 @@ import { PageTitleService } from 'app/services/page-title.service';
   standalone: true,
   imports: [
     BreadcrumbComponent,
-    NewPageBadgeComponent,
+    HeaderBadgeComponent,
     FakeProgressBarComponent,
     TranslateModule,
     AsyncPipe,
   ],
 })
 export class PageHeaderComponent implements OnInit, OnDestroy {
-  @Input() pageTitle: string;
-  @Input() loading = false;
+  readonly pageTitle = input<string>();
+  readonly customBadgeTitle = input<string>();
+  readonly loading = input(false);
 
   /**
    * You probably don't need to use this.
    * Set to true for automatic header when no header is set.
    */
-  @Input() default = false;
+  readonly default = input(false);
 
   readonly defaultTitle$ = this.pageTitleService.title$;
   readonly hasNewIndicator$ = this.pageTitleService.hasNewIndicator$;
   readonly currentTitle$ = this.defaultTitle$.pipe(
     map((defaultTitle) => {
-      if (!this.pageTitle) {
+      if (!this.pageTitle()) {
         return defaultTitle;
       }
 
-      return this.pageTitle;
+      return this.pageTitle();
     }),
   );
 
@@ -57,13 +58,13 @@ export class PageHeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    if (!this.default) {
+    if (!this.default()) {
       this.layoutService.hasCustomPageHeader$.next(true);
     }
   }
 
   ngOnDestroy(): void {
-    if (!this.default) {
+    if (!this.default()) {
       this.layoutService.hasCustomPageHeader$.next(false);
     }
   }

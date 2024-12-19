@@ -1,6 +1,5 @@
 import {
-  Directive,
-  Input,
+  Directive, input,
 } from '@angular/core';
 
 /**
@@ -13,6 +12,10 @@ import {
   standalone: true,
 })
 export class TestOverrideDirective {
-  @Input('ixTestOverride') overrideDescription: number | string | (string | number)[];
-  @Input() keepLastPart?: boolean;
+  readonly overrideDescription = input<number | string | (string | number)[] | undefined>(
+    undefined,
+  { alias: 'ixTestOverride' },
+  );
+
+  readonly keepLastPart = input<boolean>();
 }

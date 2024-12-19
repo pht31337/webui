@@ -6,11 +6,9 @@ import {
   ChangeDetectorRef,
   ChangeDetectionStrategy,
   Component,
-  ContentChild,
-  ContentChildren,
-  Input,
-  QueryList,
-  TemplateRef, output,
+  contentChildren,
+  contentChild,
+  TemplateRef, output, input,
 } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -49,60 +47,60 @@ import { TestDirective } from 'app/modules/test-id/test.directive';
   ],
 })
 export class IxTableBodyComponent<T> implements AfterViewInit {
-  @Input() columns: Column<T, ColumnComponent<T>>[];
-  @Input() dataProvider: DataProvider<T>;
-  @Input() isLoading = false;
-  @Input() detailsRowIdentifier: keyof T = 'id' as keyof T;
+  readonly columns = input<Column<T, ColumnComponent<T>>[]>();
+  readonly dataProvider = input<DataProvider<T>>();
+  readonly isLoading = input(false);
+  readonly detailsRowIdentifier = input<keyof T>('id' as keyof T);
 
   readonly expanded = output<T>();
 
-  @ContentChildren(IxTableCellDirective) customCells!: QueryList<IxTableCellDirective<T>>;
+  readonly customCells = contentChildren(IxTableCellDirective);
 
-  @ContentChild(IxTableDetailsRowDirective) detailsRow: IxTableDetailsRowDirective<T>;
+  readonly detailsRow = contentChild(IxTableDetailsRowDirective);
 
   get displayedColumns(): Column<T, ColumnComponent<T>>[] {
-    return this.columns?.filter((column) => !column?.hidden);
+    return this.columns()?.filter((column) => !column?.hidden);
   }
 
   get detailsTemplate(): TemplateRef<{ $implicit: T }> | undefined {
-    return this.detailsRow?.templateRef;
+    return this.detailsRow()?.templateRef;
   }
 
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
-    const templatedCellIndexes = this.customCells.toArray().map((cell) => cell.columnIndex);
-    const availableIndexes = Array.from({ length: this.columns.length }, (_, idx) => idx)
+    const templatedCellIndexes = this.customCells().map((cell) => cell.columnIndex());
+    const availableIndexes = Array.from({ length: this.columns().length }, (_, idx) => idx)
       .filter((idx) => !templatedCellIndexes.includes(idx));
 
-    this.customCells.forEach((cell) => {
-      if (cell.columnIndex === undefined) {
-        cell.columnIndex = availableIndexes.shift();
+    this.customCells().forEach((cell) => {
+      if (cell.columnIndex() === undefined) {
+        cell.columnIndex.set(availableIndexes.shift());
       }
     });
 
-    this.dataProvider.currentPage$.pipe(untilDestroyed(this)).subscribe(() => {
+    this.dataProvider().currentPage$.pipe(untilDestroyed(this)).subscribe(() => {
       this.cdr.detectChanges();
       this.cdr.markForCheck();
     });
   }
 
   getRowTag(row: T): string {
-    return this.columns[0]?.uniqueRowTag(row) ?? '';
+    return this.columns()[0]?.uniqueRowTag(row) ?? '';
   }
 
   getTemplateByColumnIndex(idx: number): TemplateRef<{ $implicit: T }> | undefined {
-    return this.customCells.toArray().find((cell) => cell.columnIndex === idx)?.templateRef;
+    return this.customCells().find((cell) => cell.columnIndex() === idx)?.templateRef;
   }
 
   onToggle(row: T): void {
-    this.dataProvider.expandedRow = this.isExpanded(row) ? null : row;
-    this.expanded.emit(this.dataProvider.expandedRow);
+    this.dataProvider().expandedRow = this.isExpanded(row) ? null : row;
+    this.expanded.emit(this.dataProvider().expandedRow);
   }
 
   isExpanded(row: T): boolean {
-    return this.detailsRowIdentifier
-      && (this.dataProvider?.expandedRow?.[this.detailsRowIdentifier] === row?.[this.detailsRowIdentifier]);
+    return this.detailsRowIdentifier()
+      && (this.dataProvider()?.expandedRow?.[this.detailsRowIdentifier()] === row?.[this.detailsRowIdentifier()]);
   }
 
   protected trackRowByIdentity(item: T): string {

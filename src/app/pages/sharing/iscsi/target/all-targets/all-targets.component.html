@@ -1,0 +1,46 @@
+<ix-master-detail-view
+  #masterDetailView="masterDetailViewContext"
+  [selectedItem]="dataProvider.expandedRow"
+>
+  <ix-iscsi-target-list
+    master
+    [dataProvider]="dataProvider"
+    [targets]="targets()"
+    [isMobileView]="masterDetailView.isMobileView()"
+    (toggleShowMobileDetails)="masterDetailView.toggleShowMobileDetails($event)"
+  ></ix-iscsi-target-list>
+
+  <div detail-header class="detail-header">
+    <span>
+      {{ 'Details for' | translate }}
+      {{ dataProvider.expandedRow?.name }}
+    </span>
+
+    @if (dataProvider.expandedRow; as target) {
+      <div class="detail-actions">
+        <button
+          mat-button
+          ixTest="edit-target"
+          (click)="editTarget(target)"
+        >
+          {{ 'Edit' | translate }}
+        </button>
+
+        <button
+          *ixRequiresRoles="requiredRoles"
+          mat-button
+          ixTest="delete-target"
+          (click)="deleteTarget(target)"
+        >
+          {{ 'Delete' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+
+  <ng-container detail>
+    @if (dataProvider.expandedRow) {
+      <ix-target-details [target]="dataProvider.expandedRow"></ix-target-details>
+    }
+  </ng-container>
+</ix-master-detail-view>

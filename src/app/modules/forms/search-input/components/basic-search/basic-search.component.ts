@@ -1,6 +1,6 @@
 import {
   AfterViewInit,
-  ChangeDetectionStrategy, Component, ElementRef, Input, output, ViewChild,
+  ChangeDetectionStrategy, Component, ElementRef, input, model, output, Signal, viewChild,
 } from '@angular/core';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatInput } from '@angular/material/input';
@@ -24,27 +24,27 @@ import { TestDirective } from 'app/modules/test-id/test.directive';
   ],
 })
 export class BasicSearchComponent implements AfterViewInit {
-  @Input() query: string;
-  @Input() allowAdvanced = false;
+  readonly query = model<string>();
+  readonly allowAdvanced = input(false);
 
   readonly switchToAdvanced = output();
   readonly queryChange = output<string>();
   readonly runSearch = output();
 
-  @ViewChild('searchControl') searchControl: ElementRef<HTMLInputElement>;
+  private readonly searchControl: Signal<ElementRef<HTMLElement>> = viewChild('searchControl', { read: ElementRef });
 
   ngAfterViewInit(): void {
     this.focusInput();
   }
 
   protected resetInput(): void {
-    this.query = '';
-    this.queryChange.emit(this.query);
+    this.query.set('');
+    this.queryChange.emit('');
     this.runSearch.emit();
     this.focusInput();
   }
 
   private focusInput(): void {
-    this.searchControl?.nativeElement?.focus();
+    this.searchControl()?.nativeElement?.focus();
   }
 }

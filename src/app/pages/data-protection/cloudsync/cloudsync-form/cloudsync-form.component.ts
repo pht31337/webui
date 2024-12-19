@@ -16,7 +16,7 @@ import {
 } from 'rxjs';
 import {
   catchError,
-  filter, map, pairwise, startWith, tap,
+  filter, map, pairwise, startWith, switchMap, tap,
 } from 'rxjs/operators';
 import { RequiresRolesDirective } from 'app/directives/requires-roles/requires-roles.directive';
 import { CloudSyncProviderName } from 'app/enums/cloudsync-provider.enum';
@@ -25,11 +25,11 @@ import { ExplorerNodeType } from 'app/enums/explorer-type.enum';
 import { mntPath } from 'app/enums/mnt-path.enum';
 import { Role } from 'app/enums/role.enum';
 import { TransferMode, transferModeNames } from 'app/enums/transfer-mode.enum';
+import { extractApiError } from 'app/helpers/api.helper';
 import { prepareBwlimit } from 'app/helpers/bwlimit.utils';
 import { buildNormalizedFileSize } from 'app/helpers/file-size.utils';
 import { mapToOptions } from 'app/helpers/options.helper';
 import { helptextCloudSync } from 'app/helptext/data-protection/cloudsync/cloudsync';
-import { ApiError } from 'app/interfaces/api-error.interface';
 import { CloudSyncTask, CloudSyncTaskUi, CloudSyncTaskUpdate } from 'app/interfaces/cloud-sync-task.interface';
 import { CloudSyncCredential } from 'app/interfaces/cloudsync-credential.interface';
 import { CloudSyncProvider } from 'app/interfaces/cloudsync-provider.interface';
@@ -61,6 +61,7 @@ import { CreateStorjBucketDialogComponent } from 'app/pages/data-protection/clou
 import { CustomTransfersDialogComponent } from 'app/pages/data-protection/cloudsync/custom-transfers-dialog/custom-transfers-dialog.component';
 import { TransferModeExplanationComponent } from 'app/pages/data-protection/cloudsync/transfer-mode-explanation/transfer-mode-explanation.component';
 import { CloudCredentialService } from 'app/services/cloud-credential.service';
+import { ErrorHandlerService } from 'app/services/error-handler.service';
 import { FilesystemService } from 'app/services/filesystem.service';
 import { ApiService } from 'app/services/websocket/api.service';
 
@@ -154,7 +155,7 @@ export class CloudSyncFormComponent implements OnInit {
     chunk_size: [96, Validators.min(5)],
     fast_list: [false],
     encryption: [false],
-    filename_encryption: [true],
+    filename_encryption: [false],
     encryption_password: [''],
     encryption_salt: [''],
     transfers: [4],
@@ -220,7 +221,8 @@ export class CloudSyncFormComponent implements OnInit {
     private api: ApiService,
     protected router: Router,
     private cdr: ChangeDetectorRef,
-    private errorHandler: FormErrorHandlerService,
+    private formErrorHandler: FormErrorHandlerService,
+    private errorHandler: ErrorHandlerService,
     private snackbar: SnackbarService,
     private dialogService: DialogService,
     protected matDialog: MatDialog,
@@ -243,7 +245,7 @@ export class CloudSyncFormComponent implements OnInit {
       tap((credentials) => {
         this.credentialsList = credentials;
         for (const credential of credentials) {
-          if (credential.provider === CloudSyncProviderName.GoogleDrive) {
+          if (credential.provider.type === CloudSyncProviderName.GoogleDrive) {
             this.googleDriveProviderIds.push(credential.id);
           }
         }
@@ -260,30 +262,7 @@ export class CloudSyncFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.isLoading = true;
-    forkJoin([
-      this.getCredentialsList(),
-      this.getProviders(),
-    ]).pipe(
-      catchError((error: unknown) => {
-        this.isLoading = false;
-        this.cdr.markForCheck();
-        this.errorHandler.handleValidationErrors(error, this.form);
-        return EMPTY;
-      }),
-      untilDestroyed(this),
-    ).subscribe(() => {
-      this.isLoading = false;
-      this.cdr.markForCheck();
-
-      this.setFileNodeProvider();
-      this.setBucketNodeProvider();
-      this.setupForm();
-
-      if (this.editingTask) {
-        this.setTaskForEdit();
-      }
-    });
+    this.getInitialData();
   }
 
   setupForm(): void {
@@ -420,7 +399,7 @@ export class CloudSyncFormComponent implements OnInit {
             value: bucket.Path,
             disabled: !bucket.Enabled,
           }));
-          if (targetCredentials.provider === CloudSyncProviderName.Storj) {
+          if (targetCredentials.provider.type === CloudSyncProviderName.Storj) {
             bucketOptions.unshift({
               label: this.translate.instant('Add new'),
               value: newOption,
@@ -433,21 +412,27 @@ export class CloudSyncFormComponent implements OnInit {
           this.form.controls.bucket_input.disable();
           this.cdr.markForCheck();
         },
-        error: (error: ApiError) => {
+        error: (error: unknown) => {
           this.isLoading = false;
           this.form.controls.bucket.disable();
           this.form.controls.bucket_input.enable();
           this.dialogService.closeAllDialogs();
+          this.cdr.markForCheck();
+          const apiError = extractApiError(error);
+          if (!apiError) {
+            this.errorHandler.handleError(error);
+            return;
+          }
+
           this.dialogService.confirm({
-            title: error.extra ? (error.extra as { excerpt: string }).excerpt : `${this.translate.instant('Error: ')}${error.error}`,
-            message: error.reason,
+            title: apiError.extra ? (apiError.extra as { excerpt: string }).excerpt : `${this.translate.instant('Error: ')}${apiError.error}`,
+            message: apiError.reason,
             hideCheckbox: true,
             buttonText: this.translate.instant('Fix Credential'),
           }).pipe(filter(Boolean), untilDestroyed(this)).subscribe(() => {
             const navigationExtras: NavigationExtras = { state: { editCredential: 'cloudcredentials', id: targetCredentials.id } };
             this.router.navigate(['/', 'credentials', 'backup-credentials'], navigationExtras);
           });
-          this.cdr.markForCheck();
         },
       });
   }
@@ -505,11 +490,11 @@ export class CloudSyncFormComponent implements OnInit {
     if (credentials) {
       this.enableRemoteExplorer();
       const targetCredentials = find(this.credentialsList, { id: credentials });
-      const targetProvider = find(this.providersList, { name: targetCredentials?.provider });
+      const targetProvider = find(this.providersList, { name: targetCredentials?.provider.type });
       if (targetProvider?.buckets) {
         this.isLoading = true;
-        if (targetCredentials.provider === CloudSyncProviderName.MicrosoftAzure
-          || targetCredentials.provider === CloudSyncProviderName.Hubic
+        if (targetCredentials.provider.type === CloudSyncProviderName.MicrosoftAzure
+          || targetCredentials.provider.type === CloudSyncProviderName.Hubic
         ) {
           this.bucketPlaceholder = this.translate.instant('Container');
           this.bucketTooltip = this.translate.instant('Select the pre-defined container to use.');
@@ -536,7 +521,7 @@ export class CloudSyncFormComponent implements OnInit {
         this.form.controls.bucket_policy_only.disable();
       }
 
-      const schemaFound = find(this.providersList, { name: targetCredentials?.provider });
+      const schemaFound = find(this.providersList, { name: targetCredentials?.provider.type });
       const taskSchema = schemaFound ? schemaFound.task_schema : [];
 
       const taskSchemas = ['task_encryption', 'fast_list', 'chunk_size', 'storage_class'];
@@ -753,7 +738,7 @@ export class CloudSyncFormComponent implements OnInit {
       },
       error: (error: unknown) => {
         this.isLoading = false;
-        this.errorHandler.handleValidationErrors(error, this.form);
+        this.formErrorHandler.handleValidationErrors(error, this.form);
         this.cdr.markForCheck();
       },
     });
@@ -769,6 +754,50 @@ export class CloudSyncFormComponent implements OnInit {
   goToManageCredentials(): void {
     this.router.navigate(['/', 'credentials', 'backup-credentials']);
     this.chainedRef.close({ response: false, error: null });
+  }
+
+  private getInitialData(): void {
+    this.isLoading = true;
+    forkJoin([
+      this.getCredentialsList(),
+      this.getProviders(),
+    ]).pipe(
+      catchError((error: unknown) => {
+        this.isLoading = false;
+        this.cdr.markForCheck();
+        this.formErrorHandler.handleValidationErrors(error, this.form);
+        return EMPTY;
+      }),
+      untilDestroyed(this),
+    ).subscribe(() => {
+      this.isLoading = false;
+      this.cdr.markForCheck();
+
+      this.setFileNodeProvider();
+      this.setBucketNodeProvider();
+      this.setupForm();
+
+      if (this.editingTask) {
+        this.setTaskForEdit();
+      }
+
+      this.listenToFilenameEncryption();
+    });
+  }
+
+  private listenToFilenameEncryption(): void {
+    this.form.controls.filename_encryption.valueChanges.pipe(
+      filter(Boolean),
+      switchMap(() => this.dialogService.confirm({
+        title: this.translate.instant('Warning'),
+        message: this.translate.instant(
+          'This option is experimental in rclone and we recommend you do not use it. Are you sure you want to continue?',
+        ),
+      })),
+      filter((confirmed) => !confirmed),
+      tap(() => this.form.controls.filename_encryption.setValue(false)),
+      untilDestroyed(this),
+    ).subscribe();
   }
 
   private handleFolderChange(formControl: FormControl, values: string | string[]): void {

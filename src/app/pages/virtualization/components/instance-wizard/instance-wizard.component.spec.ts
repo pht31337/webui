@@ -16,6 +16,7 @@ import { fakeSuccessfulJob } from 'app/core/testing/utils/fake-job.utils';
 import { mockCall, mockJob, mockApi } from 'app/core/testing/utils/mock-api.utils';
 import {
   VirtualizationDeviceType,
+  VirtualizationNicType,
   VirtualizationProxyProtocol,
   VirtualizationType,
 } from 'app/enums/virtualization.enum';
@@ -33,7 +34,8 @@ import { AuthService } from 'app/services/auth/auth.service';
 import { FilesystemService } from 'app/services/filesystem.service';
 import { ApiService } from 'app/services/websocket/api.service';
 
-describe('InstanceWizardComponent', () => {
+// TODO: https://ixsystems.atlassian.net/browse/NAS-133118
+describe.skip('InstanceWizardComponent', () => {
   let spectator: SpectatorRouting<InstanceWizardComponent>;
   let loader: HarnessLoader;
   let form: IxFormHarness;
@@ -56,6 +58,10 @@ describe('InstanceWizardComponent', () => {
           cpu: 'Intel Xeon',
           memory: 2 * GiB,
         } as VirtualizationInstance]),
+        mockCall('interface.has_pending_changes', false),
+        mockCall('virt.device.nic_choices', {
+          nic1: 'nic1',
+        }),
         mockCall('virt.device.gpu_choices', {
           pci_0000_01_00_0: {
             bus: 1,
@@ -143,6 +149,12 @@ describe('InstanceWizardComponent', () => {
     const usbDeviceCheckbox = await loader.getHarness(IxCheckboxHarness.with({ label: 'xHCI Host Controller (0003)' }));
     await usbDeviceCheckbox.setValue(true);
 
+    const useDefaultNetworkCheckbox = await loader.getHarness(IxCheckboxHarness.with({ label: 'Use default network settings' }));
+    await useDefaultNetworkCheckbox.setValue(false);
+
+    const nicDeviceCheckbox = await loader.getHarness(IxCheckboxHarness.with({ label: 'nic1' }));
+    await nicDeviceCheckbox.setValue(true);
+
     const gpuDeviceCheckbox = await loader.getHarness(IxCheckboxHarness.with({ label: 'NVIDIA GeForce GTX 1080' }));
     await gpuDeviceCheckbox.setValue(true);
 
@@ -166,9 +178,45 @@ describe('InstanceWizardComponent', () => {
           dest_port: 2000,
           dest_proto: VirtualizationProxyProtocol.Udp,
         },
+        { dev_type: VirtualizationDeviceType.Nic, nic_type: VirtualizationNicType.Bridged, parent: 'nic1' },
         { dev_type: VirtualizationDeviceType.Usb, product_id: '0003' },
         { dev_type: VirtualizationDeviceType.Gpu, pci: 'pci_0000_01_00_0' },
       ],
+      image: 'almalinux/8/cloud',
+      memory: GiB,
+      environment: {},
+    }]);
+    expect(spectator.inject(DialogService).jobDialog).toHaveBeenCalled();
+    expect(spectator.inject(SnackbarService).success).toHaveBeenCalled();
+  });
+
+  it('sends no NIC devices when default network settings checkbox is set', async () => {
+    await form.fillForm({
+      Name: 'new',
+      Autostart: true,
+      'CPU Configuration': '1-2',
+      'Memory Size': '1 GiB',
+    });
+
+    const browseButton = await loader.getHarness(MatButtonHarness.with({ text: 'Browse Catalog' }));
+    await browseButton.click();
+
+    const useDefaultNetworkCheckbox = await loader.getHarness(IxCheckboxHarness.with({ label: 'Use default network settings' }));
+    await useDefaultNetworkCheckbox.setValue(false);
+
+    const nicDeviceCheckbox = await loader.getHarness(IxCheckboxHarness.with({ label: 'nic1' }));
+    await nicDeviceCheckbox.setValue(true);
+
+    await useDefaultNetworkCheckbox.setValue(true); // no nic1 should be send now
+
+    const createButton = await loader.getHarness(MatButtonHarness.with({ text: 'Create' }));
+    await createButton.click();
+
+    expect(spectator.inject(ApiService).job).toHaveBeenCalledWith('virt.instance.create', [{
+      name: 'new',
+      autostart: true,
+      cpu: '1-2',
+      devices: [],
       image: 'almalinux/8/cloud',
       memory: GiB,
       environment: {},

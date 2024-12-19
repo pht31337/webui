@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, Input, OnChanges,
+  ChangeDetectionStrategy, Component, computed, input, OnChanges,
 } from '@angular/core';
 import { FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -39,25 +39,25 @@ import { NormalSelectionComponent } from './normal-selection/normal-selection.co
   ],
 })
 export class AutomatedDiskSelectionComponent implements OnChanges {
-  @Input() isStepActive: boolean;
-  @Input() type: VdevType;
-  @Input() inventory: DetailsDisk[] = [];
-  @Input() canChangeLayout = false;
-  @Input() limitLayouts: CreateVdevLayout[] = [];
+  readonly isStepActive = input<boolean>();
+  readonly type = input<VdevType>();
+  readonly inventory = input<DetailsDisk[]>([]);
+  readonly canChangeLayout = input(false);
+  readonly limitLayouts = input<CreateVdevLayout[]>([]);
 
   readonly layoutControl = new FormControl(null as CreateVdevLayout, Validators.required);
 
-  get isDataVdev(): boolean {
-    return this.type === VdevType.Data;
-  }
+  protected isDataVdev = computed(() => {
+    return this.type() === VdevType.Data;
+  });
 
-  get dataLayoutTooltip(): string {
-    if (this.isDataVdev) {
+  protected dataLayoutTooltip = computed(() => {
+    if (this.isDataVdev()) {
       return 'Read only field: The layout of this device has been preselected to match the layout of the existing Data devices in the pool';
     }
 
     return '';
-  }
+  });
 
   protected vdevLayoutOptions$ = of<SelectOption<CreateVdevLayout>[]>([]);
 
@@ -78,34 +78,34 @@ export class AutomatedDiskSelectionComponent implements OnChanges {
     return isDraidLayout(this.layoutControl.value);
   }
 
-  get isMetadataVdev(): boolean {
-    return this.type === VdevType.Special;
-  }
+  protected isMetadataVdev = computed(() => {
+    return this.type() === VdevType.Special;
+  });
 
   private updateStoreOnChanges(): void {
     this.store.isLoading$.pipe(filter((isLoading) => !isLoading), take(1), untilDestroyed(this)).subscribe({
       next: () => {
         if (
-          (!this.canChangeLayout && !this.isDataVdev)
-          && (this.type && this.limitLayouts.length)
+          (!this.canChangeLayout() && !this.isDataVdev())
+          && (this.type() && this.limitLayouts().length)
         ) {
-          this.store.setTopologyCategoryLayout(this.type, this.limitLayouts[0]);
+          this.store.setTopologyCategoryLayout(this.type(), this.limitLayouts()[0]);
         }
       },
     });
     this.layoutControl.valueChanges.pipe(untilDestroyed(this)).subscribe((layout) => {
-      this.store.setTopologyCategoryLayout(this.type, layout);
+      this.store.setTopologyCategoryLayout(this.type(), layout);
     });
   }
 
   private listenForResetEvents(): void {
     merge(
       this.store.startOver$,
-      this.store.resetStep$.pipe(filter((vdevType) => vdevType === this.type)),
+      this.store.resetStep$.pipe(filter((vdevType) => vdevType === this.type())),
     )
       .pipe(untilDestroyed(this))
       .subscribe(() => {
-        this.layoutControl.setValue(this.canChangeLayout ? null : this.limitLayouts[0]);
+        this.layoutControl.setValue(this.canChangeLayout() ? null : this.limitLayouts()[0]);
       });
   }
 
@@ -113,7 +113,7 @@ export class AutomatedDiskSelectionComponent implements OnChanges {
     const allowedLayouts = vdevLayoutOptions.filter((option) => limitLayouts.includes(option.value));
     this.vdevLayoutOptions$ = of(allowedLayouts);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-boolean-literal-compare
-    const cannotChangeLayout = this.canChangeLayout === false;
+    const cannotChangeLayout = this.canChangeLayout() === false;
     if (cannotChangeLayout && limitLayouts.length) {
       setValueIfNotSame(this.layoutControl, limitLayouts[0]);
     }

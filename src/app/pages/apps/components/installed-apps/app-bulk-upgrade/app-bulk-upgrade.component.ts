@@ -5,7 +5,6 @@ import {
   Inject,
   signal,
   TrackByFunction,
-  ViewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -22,7 +21,6 @@ import {
   filter, map, Observable, of, pairwise, startWith,
 } from 'rxjs';
 import { appImagePlaceholder } from 'app/constants/catalog.constants';
-import { LetDirective } from 'app/directives/app-let.directive';
 import { RequiresRolesDirective } from 'app/directives/requires-roles/requires-roles.directive';
 import { Role } from 'app/enums/role.enum';
 import { App, AppUpgradeParams } from 'app/interfaces/app.interface';
@@ -62,13 +60,11 @@ import { ApiService } from 'app/services/websocket/api.service';
     IxSelectComponent,
     RequiresRolesDirective,
     TestDirective,
-    LetDirective,
     MatButton,
   ],
 })
 export class AppBulkUpgradeComponent {
-  @ViewChild(MatAccordion) accordion: MatAccordion;
-  expandedItems = signal<string[]>([]);
+  readonly expandedItems = signal<string[]>([]);
 
   form = this.formBuilder.group<Record<string, string>>({});
   bulkItems = new Map<string, BulkListItem<App>>();
@@ -133,7 +129,7 @@ export class AppBulkUpgradeComponent {
           });
           this.loadingMap.set(name, false);
         },
-        error: (error) => {
+        error: (error: unknown) => {
           console.error(error);
           this.loadingMap.set(name, false);
         },

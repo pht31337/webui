@@ -2,17 +2,14 @@ import { HarnessLoader, parallel } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { fakeAsync, tick } from '@angular/core/testing';
 import {
-  FormControl, FormsModule, NgControl, ReactiveFormsModule,
+  FormControl, ReactiveFormsModule,
 } from '@angular/forms';
 import {
-  createHostFactory,
-  mockProvider, SpectatorHost,
+  createHostFactory, SpectatorHost,
 } from '@ngneat/spectator/jest';
-import { MockComponent } from 'ng-mocks';
 import { Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { Option, SelectOption } from 'app/interfaces/option.interface';
-import { IxErrorsComponent } from 'app/modules/forms/ix-forms/components/ix-errors/ix-errors.component';
 import { IxLabelComponent } from 'app/modules/forms/ix-forms/components/ix-label/ix-label.component';
 import { IxSelectHarness } from 'app/modules/forms/ix-forms/components/ix-select/ix-select.harness';
 import { TooltipComponent } from 'app/modules/tooltip/tooltip.component';
@@ -27,15 +24,6 @@ describe('IxSelectComponent', () => {
     component: IxSelectComponent,
     imports: [
       ReactiveFormsModule,
-      FormsModule,
-    ],
-    providers: [
-      mockProvider(NgControl),
-    ],
-    declarations: [
-      MockComponent(IxErrorsComponent),
-      MockComponent(IxLabelComponent),
-      MockComponent(TooltipComponent),
     ],
   });
 
@@ -88,9 +76,9 @@ describe('IxSelectComponent', () => {
 
       const label = spectator.query(IxLabelComponent);
       expect(label).toExist();
-      expect(label.label).toBe('Select Group');
-      expect(label.required).toBe(true);
-      expect(label.tooltip).toBe('Select group to use.');
+      expect(label.label()).toBe('Select Group');
+      expect(label.required()).toBe(true);
+      expect(label.tooltip()).toBe('Select group to use.');
     });
 
     it('shows loader while options are loading', fakeAsync(() => {
@@ -133,7 +121,7 @@ describe('IxSelectComponent', () => {
     });
 
     it('shows \'No options\' if options length === 0', async () => {
-      spectator.component.options = of<SelectOption[]>([]);
+      spectator.setHostInput('options', of<SelectOption[]>([]));
       spectator.component.ngOnChanges();
 
       const select = await (await loader.getHarness(IxSelectHarness)).getSelectHarness();
@@ -146,7 +134,7 @@ describe('IxSelectComponent', () => {
     it('shows \'Options cannot be loaded\' if options has some error', async () => {
       jest.spyOn(console, 'error').mockImplementation();
 
-      spectator.component.options = throwError(() => new Error('Some Error'));
+      spectator.setHostInput('options', throwError(() => new Error('Some Error')));
       spectator.component.ngOnChanges();
 
       const select = await (await loader.getHarness(IxSelectHarness)).getSelectHarness();
@@ -158,10 +146,11 @@ describe('IxSelectComponent', () => {
     });
 
     it('allows some options to be disabled', async () => {
-      spectator.component.options = of([
+      spectator.setHostInput('options', of([
         { label: 'GBR', value: 'Great Britain' },
         { label: 'GRL', value: 'Greenland', disabled: true },
-      ]);
+      ]));
+
       spectator.component.ngOnChanges();
 
       const select = await (await loader.getHarness(IxSelectHarness)).getSelectHarness();
@@ -173,10 +162,10 @@ describe('IxSelectComponent', () => {
     });
 
     it('shows options tooltip if it is provided', async () => {
-      spectator.component.options = of([
+      spectator.setHostInput('options', of([
         { label: 'GBR', value: 'Great Britain' },
         { label: 'GRL', value: 'Greenland', tooltip: 'Not really green.' },
-      ]);
+      ]));
       spectator.component.ngOnChanges();
 
       const select = await (await loader.getHarness(IxSelectHarness)).getSelectHarness();
@@ -184,7 +173,7 @@ describe('IxSelectComponent', () => {
 
       const tooltips = spectator.queryAll(TooltipComponent);
       expect(tooltips).toHaveLength(1);
-      expect(tooltips[0].message).toBe('Not really green.');
+      expect(tooltips[0].message()).toBe('Not really green.');
     });
   });
 
