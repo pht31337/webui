@@ -54,8 +54,7 @@ describe('TrainCardComponent', () => {
   });
 
   it('shows single train name', () => {
-    const train = spectator.query('.single-train-name');
-    expect(train).toHaveText('Current Train: some train - Some train description');
+    expect(spectator.query('.single-train-name')).toHaveText('Current Train: some train - Some train description');
   });
 
   it('calls "check" when Refresh button is pressed', async () => {
